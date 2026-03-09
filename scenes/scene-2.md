@@ -1,10 +1,10 @@
 # Scene 2
 
 ## Storyboard Panels
-1. **Panel 1**: Tracking shot, Alex sprints laterally across the baseline, his body leaning into a powerful forehand stroke, muscles tensed.
-2. **Panel 2**: Macro focus, the moment of impact as the yellow ball compresses against the strings of Alex's black and lime green racket, sparks of grit flying from the court.
-3. **Panel 3**: Dutch angle, Alex mid-air during a leaping backhand, his navy polo fluttering, with the Empire State Building visible in the hazy distance.
-4. **Panel 4**: Wide shot from behind the baseline, Alex follows through on his swing, perfectly framed by the symmetry of the net and the urban landscape.
+1. **Panel 1**: Low angle shot from the ground looking up, Alex tosses a neon yellow tennis ball high into the air. His body is coiled, muscles in his arm defined as he prepares for a powerful serve.
+2. **Panel 2**: Dutch angle, mid-action shot of Alex connecting with the ball. The racquet is a blur of motion, and his face shows intense concentration, sweat beginning to bead on his forehead.
+3. **Panel 3**: Close-up, macro focus on Alex’s eyes as they track the ball across the net. The reflection of the court and the distant buildings can be seen in his sharp, determined gaze.
+4. **Panel 4**: Wide shot, Alex is captured in a dynamic baseline sprint, his white polo and navy shorts contrasting against the blue court surface as he reaches for a deep return.
 
 ## AI Image Prompt
-An 8k cinematic 4-grid storyboard layout showing intense tennis action. Panel 1: Tracking shot of Alex in a navy polo sprinting for a forehand. Panel 2: Macro shot of the ball hitting the lime green and black racket strings. Panel 3: Dutch angle of Alex mid-air performing a backhand, skyline in the background. Panel 4: Wide shot from the back of the court showing Alex's follow-through. Consistent character features, navy polo, white shorts, and short dark hair. Dynamic motion blur, bright daylight, realistic textures.
+An 8k cinematic 4-grid storyboard layout. Panel 1: Low angle, Alex tossing a tennis ball for a serve, athletic form, white polo with navy trim. Panel 2: Dutch angle, Alex hitting a powerful forehand, intense expression, sweat on brow. Panel 3: Close-up, macro focus on Alex’s eyes tracking the ball. Panel 4: Wide shot, Alex sprinting across the blue baseline of a New York court. Consistent character appearance, age 26, same tennis outfit, high-speed shutter photography style, vibrant daylight.

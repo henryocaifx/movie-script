@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { StoryboardInput } from '@/components/storyboard-input';
 import { StoryboardEditor } from '@/components/storyboard-editor';
 import { VisualStoryboardGenerator } from '@/components/visual-storyboard-generator';
+import { NanoBananaRenderer } from '@/components/nano-banana-renderer';
 import { generateCinematicStoryboard } from '@/ai/flows/generate-cinematic-storyboard';
 import { parseStoryboard, StoryboardScene } from '@/lib/storyboard-parser';
 import { useToast } from '@/hooks/use-toast';
@@ -86,6 +87,7 @@ export default function CineScriptAI() {
           <div className="space-y-16">
             <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
             <VisualStoryboardGenerator scenes={scenes} />
+            <NanoBananaRenderer scenes={scenes} />
           </div>
         )}
       </main>

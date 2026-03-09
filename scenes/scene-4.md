@@ -1,10 +1,10 @@
 # Scene 4
 
 ## Storyboard Panels
-1. **Panel 1**: Dolly zoom, Alex stands at the service line, tossing the ball high into the air, the sun positioned directly behind it to create a lens flare.
-2. **Panel 2**: Side profile medium shot, the explosive moment of the serve, Alex’s body fully extended, racket at the peak of its arc.
-3. **Panel 3**: Close-up, Alex’s face breaks into a confident, subtle smirk as he watches his ace land perfectly in the corner of the service box.
-4. **Panel 4**: Wide shot, Alex walks toward the net at sunset, raising his racket in a quiet gesture of victory, the New York skyline glowing in golden hour hues.
+1. **Panel 1**: High angle shot, Alex sits on a wooden court bench, a white towel draped around his neck. He is catching his breath, the intensity of the match giving way to a cool, relaxed vibe.
+2. **Panel 2**: Close-up, Alex unscrews a water bottle and drinks, water droplets running down his chin. In the reflection of his sport-wrap sunglasses, the glass towers of Manhattan are perfectly mirrored.
+3. **Panel 3**: Wide shot, the sun begins to set over the city, casting a golden-orange hue over the tennis court. Alex stands alone on the court, racquet held loosely by his side, looking at the horizon.
+4. **Panel 4**: Medium shot, Alex exits the court, swinging his racquet bag over his shoulder. He walks away from the camera toward the city lights, the same "cool guy" swagger from the start, now tempered by the fatigue of a hard-won game.
 
 ## AI Image Prompt
-An 8k cinematic 4-grid storyboard layout of the match conclusion. Panel 1: Dolly zoom of Alex tossing a ball for a serve, sun flare effect. Panel 2: Side profile of Alex’s full-extension serve. Panel 3: Close-up of Alex smirking with confidence. Panel 4: Wide shot of Alex at the net at sunset, holding his racket up with the NYC skyline in golden hour light. Consistent character features, navy polo, white shorts, and short dark hair. Warm golden hour lighting, rim lighting on the silhouette, 8k resolution.
+An 8k cinematic 4-grid storyboard layout. Panel 1: High angle, Alex (26, white polo, navy shorts) resting on a bench with a towel. Panel 2: Close-up, Alex drinking water, NYC skyline reflected in his sunglasses. Panel 3: Wide shot, golden hour sunset over the NYC tennis court, Alex’s silhouette looking at the city. Panel 4: Medium shot, Alex walking away with his bag over his shoulder toward the city lights. Consistent character features, clothing, and atmosphere, golden hour lighting, cinematic film grain, anamorphic widescreen.
