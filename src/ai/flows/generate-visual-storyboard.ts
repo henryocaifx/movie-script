@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow that generates visual storyboard panels
- * using the Gemini 2.5 Flash Image (nano-banana) model.
+ * using the Gemini 3.1 Flash Image Preview model.
  *
  * - generateVisualStoryboard - A function that handles the visual generation process.
  * - VisualStoryboardInput - The input type for the function.
@@ -12,6 +12,7 @@ import { z } from 'genkit';
 
 const VisualStoryboardInputSchema = z.object({
   characterImageUri: z.string().describe("A data URI of the character reference image."),
+  characterName: z.string().optional().describe("The name of the character to match in the reference image."),
   previousStoryboardUri: z.string().optional().describe("A data URI of the previously generated storyboard for continuity."),
   promptText: z.string().describe("The detailed visual prompt for the current scene."),
   aspectRatio: z.string().default('16:9'),
@@ -46,6 +47,7 @@ Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
 
     const promptParts: any[] = [
       { text: systemInstruction },
+      { text: `The character in the following reference image is: ${input.characterName || 'the protagonist'}. Please ensure they are visually consistent across all panels.` },
       { media: { url: input.characterImageUri } }
     ];
 
@@ -57,7 +59,7 @@ Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
     promptParts.push({ text: `Generate the following storyboard scene: ${input.promptText}` });
 
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-image',
+      model: 'googleai/gemini-3.1-flash-image-preview',
       prompt: promptParts,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],

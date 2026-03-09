@@ -62,6 +62,7 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
         
         const imageUrl = await generateVisualStoryboard({
           characterImageUri: characterImage,
+          characterName: characterName,
           previousStoryboardUri: previousImage,
           promptText: fullPrompt,
           aspectRatio,
@@ -79,8 +80,8 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
       }
 
       toast({
-        title: "Nano Banana Render Complete",
-        description: `Successfully produced ${scenes.length} sequential storyboards with continuity.`,
+        title: "Gemini 3.1 Render Complete",
+        description: `Successfully produced ${scenes.length} sequential storyboards with character consistency.`,
       });
     } catch (error: any) {
       toast({
@@ -112,9 +113,9 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-primary/10 border border-primary/20">
             <Cpu className="h-3 w-3 text-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Experimental Engine</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Next-Gen Engine</span>
           </div>
-          <h2 className="text-4xl font-headline font-bold text-center">Nano Banana 2 Renderer</h2>
+          <h2 className="text-4xl font-headline font-bold text-center">Nano Banana 2 (Gemini 3.1)</h2>
         </div>
         <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/10" />
       </div>
@@ -122,14 +123,14 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <Card className="glass-panel border-primary/10 lg:col-span-1 h-fit sticky top-24 shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-lg">Reference Deck</CardTitle>
-            <CardDescription>Character matching & continuity settings</CardDescription>
+            <CardTitle className="text-lg">Character Reference</CardTitle>
+            <CardDescription>Upload the character(s) and set their identity</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Character Identity</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Character Name</Label>
               <Input 
-                placeholder="Match character name (e.g. Alex)" 
+                placeholder="Name (must match your script)" 
                 value={characterName}
                 onChange={(e) => setCharacterName(e.target.value)}
                 className="bg-background/50"
@@ -143,13 +144,13 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
                   <>
                     <img src={characterImage} alt="Reference" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-xs font-bold text-white uppercase tracking-widest">Swap Character</span>
+                      <span className="text-xs font-bold text-white uppercase tracking-widest">Update Portait</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <ImageIcon className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <span className="mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Upload Reference Image</span>
+                    <span className="mt-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Upload Portrait</span>
                   </>
                 )}
                 <input 
@@ -164,7 +165,7 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs">Resolution</Label>
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Resolution</Label>
                 <Select value={resolution} onValueChange={setResolution}>
                   <SelectTrigger className="bg-background/50 h-9">
                     <SelectValue />
@@ -176,14 +177,15 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Cinema Ratio</Label>
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Aspect Ratio</Label>
                 <Select value={aspectRatio} onValueChange={setAspectRatio}>
                   <SelectTrigger className="bg-background/50 h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="16:9">16:9 Widescreen</SelectItem>
+                    <SelectItem value="16:9">16:9 Cinema</SelectItem>
                     <SelectItem value="2.35:1">2.35:1 Anamorphic</SelectItem>
+                    <SelectItem value="4:3">4:3 Academy</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -200,7 +202,7 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
               ) : (
                 <>
                   <Wand2 className="mr-2 h-4 w-4" />
-                  Begin Render Sequence
+                  Render Sequence (3.1)
                 </>
               )}
             </Button>
@@ -211,7 +213,7 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
           {isGenerating && (
             <div className="space-y-2">
               <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-primary">
-                <span>Continuity Processing</span>
+                <span>Multi-Image Continuity Processing</span>
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-1 bg-white/5" />
@@ -239,14 +241,14 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
                             onClick={() => downloadImage(scene.id, idx)}
                           >
                             <Download className="h-3 w-3 mr-2" />
-                            Export storyboard-{idx + 1}.png
+                            Download storyboard-{idx + 1}.png
                           </Button>
                         </div>
                       </>
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground/20">
                         <History className="h-8 w-8 mb-2" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Pending Sequence {idx + 1}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Awaiting Sequence {idx + 1}</span>
                       </div>
                     )}
                     <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
@@ -257,7 +259,7 @@ export function NanoBananaRenderer({ scenes }: NanoBananaRendererProps) {
                     <div className="p-3 bg-primary/5 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-3 w-3 text-accent" />
-                        <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Render Verified</span>
+                        <span className="text-[10px] font-bold text-accent uppercase tracking-widest">3.1 Render Verified</span>
                       </div>
                       <span className="text-[9px] text-muted-foreground font-mono">SEQ_REF_{idx}</span>
                     </div>
