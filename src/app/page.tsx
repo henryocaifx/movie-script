@@ -9,22 +9,32 @@ import { generateCinematicStoryboard } from '@/ai/flows/generate-cinematic-story
 import { parseStoryboard, StoryboardScene } from '@/lib/storyboard-parser';
 import { useToast } from '@/hooks/use-toast';
 import { Clapperboard, Terminal } from 'lucide-react';
+import { getLatestStoryboardContextAction } from '@/app/actions/get-latest-context';
 
 export default function CineScriptAI() {
   const [isLoading, setIsLoading] = useState(false);
   const [scenes, setScenes] = useState<StoryboardScene[] | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
 
   const handleGenerate = async (values: { charactersDescription: string; movieIdea: string }) => {
     setIsLoading(true);
+    setGeneratedImages({}); // Clear previous images
     try {
-      const rawOutput = await generateCinematicStoryboard(values);
+      // Get context from previous exports
+      const contextResult = await getLatestStoryboardContextAction();
+      const previousContext = contextResult.success ? contextResult.context : '';
+
+      const rawOutput = await generateCinematicStoryboard({
+        ...values,
+        previousContext
+      });
       const parsedScenes = parseStoryboard(rawOutput);
-      
+
       if (parsedScenes.length === 0) {
         throw new Error('AI generated a blank storyboard. Please try again with more detail.');
       }
-      
+
       setScenes(parsedScenes);
       toast({
         title: "Storyboard Drafted",
@@ -43,6 +53,7 @@ export default function CineScriptAI() {
 
   const handleReset = () => {
     setScenes(null);
+    setGeneratedImages({});
   };
 
   return (
@@ -76,18 +87,25 @@ export default function CineScriptAI() {
                 Your Movie. <span className="text-primary italic">AI Paced.</span>
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Enter your premise and let Gemini-3 transform it into a professionally timed 
+                Enter your premise and let Gemini-3 transform it into a professionally timed
                 multi-scene storyboard with technical camera direction.
               </p>
             </div>
-            
+
             <StoryboardInput onSubmit={handleGenerate} isLoading={isLoading} />
           </div>
         ) : (
           <div className="space-y-16">
             <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
-            <VisualStoryboardGenerator scenes={scenes} />
-            <NanoBananaRenderer scenes={scenes} />
+            <VisualStoryboardGenerator
+              scenes={scenes}
+              generatedImages={generatedImages}
+              setGeneratedImages={setGeneratedImages}
+            />
+            <NanoBananaRenderer
+              scenes={scenes}
+              generatedImages={generatedImages}
+            />
           </div>
         )}
       </main>

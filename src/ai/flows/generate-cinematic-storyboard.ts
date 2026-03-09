@@ -14,6 +14,7 @@ import { z } from 'genkit';
 const GenerateCinematicStoryboardInputSchema = z.object({
   charactersDescription: z.string().describe('A description of the characters involved in the movie, including their number, names, and key traits. Example: "A brave knight named Sir Reginald and a cunning sorceress named Maleficent." or "Three characters: a young scientist, her robot companion, and a mischievous alien."'),
   movieIdea: z.string().describe('The basic plot idea or premise for the movie. Example: "A quest to find a magical artifact that can save their dying world."'),
+  previousContext: z.string().optional().describe('Text context from previous scenes or storyboards to ensure narrative continuity.'),
 });
 export type GenerateCinematicStoryboardInput = z.infer<typeof GenerateCinematicStoryboardInputSchema>;
 
@@ -34,6 +35,10 @@ const cinematicStoryboardPrompt = ai.definePrompt({
 Here is the movie idea and character information:
 Characters: {{{charactersDescription}}}
 Movie Idea: {{{movieIdea}}}
+{{#if previousContext}}
+Previous Storyboard Context (for continuity):
+{{{previousContext}}}
+{{/if}}
 
 Task:
 1. Analyze the provided character details and basic movie idea.

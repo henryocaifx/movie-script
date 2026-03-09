@@ -15,15 +15,20 @@ import Image from 'next/image';
 
 interface VisualStoryboardGeneratorProps {
   scenes: StoryboardScene[];
+  generatedImages: { [key: string]: string };
+  setGeneratedImages: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
-export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorProps) {
+export function VisualStoryboardGenerator({
+  scenes,
+  generatedImages,
+  setGeneratedImages
+}: VisualStoryboardGeneratorProps) {
   const [characterImage, setCharacterImage] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('2k');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -56,7 +61,7 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
     try {
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
-        
+
         // Generate the image
         const imageUrl = await generateVisualStoryboard({
           characterImageUri: characterImage,
@@ -68,10 +73,10 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
 
         newImages[scene.id] = imageUrl;
         setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
-        
+
         // Save to disk
         await saveStoryboardImageAction(i, imageUrl);
-        
+
         previousImage = imageUrl;
         setProgress(((i + 1) / scenes.length) * 100);
       }
@@ -94,7 +99,7 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
   const downloadImage = (sceneId: string, index: number) => {
     const url = generatedImages[sceneId];
     if (!url) return;
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `storyboard-${index + 1}.png`;
@@ -126,7 +131,7 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
               <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                 Character Reference
               </Label>
-              <div 
+              <div
                 className="group relative border-2 border-dashed border-white/10 rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden bg-black/20"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -143,12 +148,12 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
                     <span className="mt-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Upload Portrait</span>
                   </>
                 )}
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
               </div>
             </div>
@@ -184,8 +189,8 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              className="w-full cinematic-gradient h-12 font-bold" 
+            <Button
+              className="w-full cinematic-gradient h-12 font-bold"
               onClick={handleGenerateAll}
               disabled={isGenerating || !characterImage}
             >
@@ -228,18 +233,18 @@ export function VisualStoryboardGenerator({ scenes }: VisualStoryboardGeneratorP
                   <div className="relative aspect-video bg-black/40">
                     {imageUrl ? (
                       <>
-                        <img 
-                          src={imageUrl} 
-                          alt={`Scene ${scene.sceneNumber}`} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                        <img
+                          src={imageUrl}
+                          alt={`Scene ${scene.sceneNumber}`}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute top-4 left-4 h-8 w-8 rounded-full cinematic-gradient flex items-center justify-center text-white font-bold text-xs shadow-xl">
                           {idx + 1}
                         </div>
                         <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            size="sm" 
-                            variant="secondary" 
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             className="bg-black/60 backdrop-blur-md border-white/10 hover:bg-black/80"
                             onClick={() => downloadImage(scene.id, idx)}
                           >

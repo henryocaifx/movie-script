@@ -36,13 +36,22 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
 
   const handleSave = async () => {
     setIsSaving(true);
+
+    // Format: YYYYMMDD-HHMM
+    const now = new Date();
+    const timestamp = now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, '0') +
+      now.getDate().toString().padStart(2, '0') + '-' +
+      now.getHours().toString().padStart(2, '0') +
+      now.getMinutes().toString().padStart(2, '0');
+
     const exportData = scenes.map((scene, i) => ({
       filename: `scene-${i + 1}.md`,
       content: serializeSceneToMarkdown(scene),
     }));
 
-    const result = await saveScenesAction(exportData);
-    
+    const result = await saveScenesAction(exportData, timestamp);
+
     if (result.success) {
       toast({
         title: "Export Successful",
@@ -54,7 +63,7 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
         description: result.message,
         variant: "destructive",
       });
-      
+
       // Fallback: trigger downloads for web users if local write fails
       exportData.forEach(file => {
         const blob = new Blob([file.content], { type: 'text/markdown' });
@@ -66,7 +75,7 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
         URL.revokeObjectURL(url);
       });
     }
-    
+
     setIsSaving(false);
   };
 
@@ -150,7 +159,7 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
 
       <div className="flex justify-center pb-12">
         <Button size="lg" className="px-12 cinematic-gradient text-white border-none shadow-xl hover:scale-105 transition-transform" onClick={handleSave} disabled={isSaving}>
-           {isSaving ? "Writing Files..." : "Export All Scenes (.md)"}
+          {isSaving ? "Writing Files..." : "Export All Scenes (.md)"}
         </Button>
       </div>
     </div>
