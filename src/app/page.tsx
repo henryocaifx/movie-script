@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { StoryboardInput } from '@/components/storyboard-input';
 import { StoryboardEditor } from '@/components/storyboard-editor';
+import { VisualStoryboardGenerator } from '@/components/visual-storyboard-generator';
 import { generateCinematicStoryboard } from '@/ai/flows/generate-cinematic-storyboard';
 import { parseStoryboard, StoryboardScene } from '@/lib/storyboard-parser';
 import { useToast } from '@/hooks/use-toast';
@@ -82,7 +83,10 @@ export default function CineScriptAI() {
             <StoryboardInput onSubmit={handleGenerate} isLoading={isLoading} />
           </div>
         ) : (
-          <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
+          <div className="space-y-16">
+            <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
+            <VisualStoryboardGenerator scenes={scenes} />
+          </div>
         )}
       </main>
 
