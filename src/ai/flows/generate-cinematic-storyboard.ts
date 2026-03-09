@@ -28,7 +28,6 @@ export async function generateCinematicStoryboard(input: GenerateCinematicStoryb
 const cinematicStoryboardPrompt = ai.definePrompt({
   name: 'cinematicStoryboardPrompt',
   input: { schema: GenerateCinematicStoryboardInputSchema },
-  output: { schema: GenerateCinematicStoryboardOutputSchema },
   model: 'googleai/gemini-3-flash-preview',
   prompt: `You are a Professional Cinematographer and Prompt Engineer. Your goal is to expand a basic idea into a logically paced multi-scene storyboard.
 
@@ -67,7 +66,7 @@ const generateCinematicStoryboardFlow = ai.defineFlow(
     outputSchema: GenerateCinematicStoryboardOutputSchema,
   },
   async (input) => {
-    const { output } = await cinematicStoryboardPrompt(input);
-    return output!;
+    const response = await cinematicStoryboardPrompt(input);
+    return response.text;
   }
 );
