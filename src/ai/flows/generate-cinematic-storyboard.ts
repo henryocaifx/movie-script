@@ -36,23 +36,24 @@ Here is the movie idea and character information:
 Characters: {{{charactersDescription}}}
 Movie Idea: {{{movieIdea}}}
 {{#if previousContext}}
-Previous Storyboard Context (for continuity):
+Previous Storyboard Context (for narrative and visual style continuity ONLY — do NOT continue the scene numbering from these documents):
 {{{previousContext}}}
 {{/if}}
 
 Task:
 1. Analyze the provided character details and basic movie idea.
 2. Determine the necessary number of scenes to tell a full story arc, ensuring logical pacing. You MUST generate between 2 and 4 scenes (min=2, max=4).
-3. For each scene, create a 4-grid storyboard layout.
-4. Crucially, ensure strict character consistency across all scenes and panels. Character clothing, age, and features must remain identical throughout the storyboard. Describe this consistency clearly in your panel descriptions and especially in the IMAGE_PROMPT.
-5. Use technical camera terms (e.g., "wide shot," "close-up," "dolly zoom," "rim lighting," "anamorphic lens," "tracking shot," "dutch angle," "macro focus") in your descriptions to convey specific visual intentions.
-6. Focus heavily on visual action, character expressions, and environmental details rather than dialogue. Assume any dialogue will be added later.
-7. The "IMAGE_PROMPT" for each scene must be a single, highly detailed paragraph, optimized for high-end AI image generators. It should combine visual elements from all four panels of that scene, explicitly mentioning camera angles, lighting, character consistency, and atmospheric details to create a cohesive 4-grid image. Ensure it is explicitly for an 8k cinematic output.
+3. CRITICAL: Scene numbering MUST ALWAYS start at 1 for this new storyboard. The first scene is SCENE_START: 1, the second is SCENE_START: 2, and so on. Never carry over scene numbers from a previous context.
+4. For each scene, create a 4-grid storyboard layout.
+5. Crucially, ensure strict character consistency across all scenes and panels. Character clothing, age, and features must remain identical throughout the storyboard. Describe this consistency clearly in your panel descriptions and especially in the IMAGE_PROMPT.
+6. Use technical camera terms (e.g., "wide shot," "close-up," "dolly zoom," "rim lighting," "anamorphic lens," "tracking shot," "dutch angle," "macro focus") in your descriptions to convey specific visual intentions.
+7. Focus heavily on visual action, character expressions, and environmental details rather than dialogue. Assume any dialogue will be added later.
+8. The "IMAGE_PROMPT" for each scene must be a single, highly detailed paragraph, optimized for high-end AI image generators. It should combine visual elements from all four panels of that scene, explicitly mentioning camera angles, lighting, character consistency, and atmospheric details to create a cohesive 4-grid image. Ensure it is explicitly for an 8k cinematic output.
 
 Strictly adhere to the following output format for every scene. Do not include any additional text, introductory/concluding remarks, or explanations outside of this exact format. Output one "---" marker after each SCENE_END block:
 
 ---
-SCENE_START: [Scene Number]
+SCENE_START: [Scene Number, beginning at 1]
 PANEL_1: [Detailed visual description for panel 1, including camera angle and action]
 PANEL_2: [Detailed visual description for panel 2, including camera angle and action]
 PANEL_3: [Detailed visual description for panel 3, including camera angle and action]
@@ -61,7 +62,7 @@ IMAGE_PROMPT: [A high-detail, 8k, cinematic, single-paragraph prompt for a 4-gri
 SCENE_END
 ---
 
-Begin generating the storyboard now.`,
+Begin generating the storyboard now. Remember: the first scene MUST be SCENE_START: 1.`,
 });
 
 const generateCinematicStoryboardFlow = ai.defineFlow(

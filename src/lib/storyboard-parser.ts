@@ -18,9 +18,11 @@ export function parseStoryboard(raw: string): StoryboardScene[] {
     const imagePromptMatch = block.match(/IMAGE_PROMPT:\s*([\s\S]*?)(?=SCENE_END|$)/);
 
     if (sceneNumberMatch) {
+      // Always renumber sequentially from 1, regardless of what the AI returned
+      const sequentialNumber = (index + 1).toString();
       scenes.push({
         id: `scene-${index + 1}`,
-        sceneNumber: sceneNumberMatch[1].trim(),
+        sceneNumber: sequentialNumber,
         panels: [
           panel1Match ? panel1Match[1].trim() : '',
           panel2Match ? panel2Match[1].trim() : '',
