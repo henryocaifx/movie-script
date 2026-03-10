@@ -10,9 +10,13 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+const CharacterReferenceSchema = z.object({
+  name: z.string().describe("The name of the character."),
+  imageUri: z.string().describe("A data URI of the character reference image."),
+});
+
 const VisualStoryboardInputSchema = z.object({
-  characterImageUri: z.string().describe("A data URI of the character reference image."),
-  characterName: z.string().optional().describe("The name of the character to match in the reference image."),
+  characters: z.array(CharacterReferenceSchema).describe("List of character names and their reference images."),
   previousStoryboardUri: z.string().optional().describe("A data URI of the previously generated storyboard for continuity."),
   promptText: z.string().describe("The detailed visual prompt for the current scene."),
   aspectRatio: z.string().default('16:9'),
@@ -42,14 +46,20 @@ Panel 1 (top left)
 Panel 2 (top right)
 Panel 3 (bottom left)
 Panel 4 (bottom right)
-Visual Style: Maintain consistent lighting, color grading, and character appearance across all four panels. Ultra-realistic textures and cinematic film grain.
+Visual Style: Maintain consistent lighting, color grading, and character appearance across all four panels based on the provided character references. Ultra-realistic textures and cinematic film grain.
 Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
 
     const promptParts: any[] = [
       { text: systemInstruction },
-      { text: `The character in the following reference image is: ${input.characterName || 'the protagonist'}. Please ensure they are visually consistent across all panels.` },
-      { media: { url: input.characterImageUri } }
     ];
+
+    if (input.characters.length > 0) {
+      promptParts.push({ text: "The following images are reference portraits for the characters in the script. Please ensure their appearances match these references exactly whenever they appear in theStoryboard panels:" });
+      input.characters.forEach(char => {
+        promptParts.push({ text: `Character Name: ${char.name}` });
+        promptParts.push({ media: { url: char.imageUri } });
+      });
+    }
 
     if (input.previousStoryboardUri) {
       promptParts.push({ text: "Reference this previous storyboard output to maintain visual and stylistic continuity for the next sequence:" });

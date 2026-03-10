@@ -13,20 +13,28 @@ import { getLatestStoryboardContextAction } from '@/app/actions/get-latest-conte
 
 export default function AIFXCast() {
   const [isLoading, setIsLoading] = useState(false);
+  const [characters, setCharacters] = useState<{ name: string; description: string }[]>([]);
   const [scenes, setScenes] = useState<StoryboardScene[] | null>(null);
   const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
 
-  const handleGenerate = async (values: { charactersDescription: string; movieIdea: string }) => {
+  const handleGenerate = async (values: { characters: { name: string; description: string }[]; movieIdea: string }) => {
     setIsLoading(true);
+    setCharacters(values.characters);
     setGeneratedImages({}); // Clear previous images
     try {
       // Get context from previous exports
       const contextResult = await getLatestStoryboardContextAction();
       const previousContext = contextResult.success ? contextResult.context : '';
 
+      // Format characters for the text AI
+      const charactersDescription = values.characters
+        .map(c => `${c.name}: ${c.description}`)
+        .join('\n');
+
       const rawOutput = await generateCinematicStoryboard({
-        ...values,
+        charactersDescription,
+        movieIdea: values.movieIdea,
         previousContext
       });
       const parsedScenes = parseStoryboard(rawOutput);
@@ -53,6 +61,7 @@ export default function AIFXCast() {
 
   const handleReset = () => {
     setScenes(null);
+    setCharacters([]);
     setGeneratedImages({});
   };
 
@@ -94,6 +103,7 @@ export default function AIFXCast() {
           <div className="space-y-16">
             <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
             <VisualStoryboardGenerator
+              characters={characters}
               scenes={scenes}
               generatedImages={generatedImages}
               setGeneratedImages={setGeneratedImages}

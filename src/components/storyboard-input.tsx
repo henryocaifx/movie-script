@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,10 +9,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Users, Clapperboard, Film } from 'lucide-react';
+import { Sparkles, Users, Clapperboard, Film, Plus, Trash2 } from 'lucide-react';
 
 const formSchema = z.object({
-  charactersDescription: z.string().min(10, 'Please provide more character details.'),
+  characters: z.array(z.object({
+    name: z.string().min(1, 'Character name is required.'),
+    description: z.string().min(10, 'Please provide more character details.'),
+  })).min(1, 'Please add at least one character.'),
   movieIdea: z.string().min(20, 'Please elaborate a bit more on your movie premise.'),
 });
 
@@ -27,9 +30,14 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      charactersDescription: '',
+      characters: [{ name: '', description: '' }],
       movieIdea: '',
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "characters"
   });
 
   return (
@@ -49,27 +57,76 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="charactersDescription"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-md font-semibold">
-                      <Users className="h-4 w-4 text-accent" />
-                      Character Manifest
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="e.g., Alex (28), a cynical noir detective with a heavy wool coat. Maya (30), a high-tech thief wearing sleek obsidian armor..."
-                        className="min-h-[100px] bg-background/50 border-border/50 focus:border-primary"
-                        {...field}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="flex items-center gap-2 text-md font-semibold">
+                    <Users className="h-4 w-4 text-accent" />
+                    Character Manifest
+                  </FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 bg-background/50 border-white/10"
+                    onClick={() => append({ name: '', description: '' })}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Character
+                  </Button>
+                </div>
+
+                {fields.map((field, index) => (
+                  <div key={field.id} className="p-4 rounded-xl bg-background/30 border border-white/5 space-y-4 relative group">
+                    <div className="flex gap-4">
+                      <FormField
+                        control={form.control}
+                        name={`characters.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input
+                                placeholder="Character Name (e.g. Alex)"
+                                className="bg-background/50 border-border/50 focus:border-primary"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormDescription>Define names, ages, clothing, and distinguishing traits for consistency.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name={`characters.${index}.description`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Describe age, clothing, personality, and distinguishing traits."
+                              className="min-h-[80px] bg-background/50 border-border/50 focus:border-primary"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ))}
+                <FormDescription>Define names and details for each character to ensure consistency in the storyboard.</FormDescription>
+              </div>
 
               <FormField
                 control={form.control}

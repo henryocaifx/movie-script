@@ -14,39 +14,43 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
 interface VisualStoryboardGeneratorProps {
+  characters: { name: string; description: string }[];
   scenes: StoryboardScene[];
   generatedImages: { [key: string]: string };
   setGeneratedImages: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
 }
 
 export function VisualStoryboardGenerator({
+  characters,
   scenes,
   generatedImages,
   setGeneratedImages
 }: VisualStoryboardGeneratorProps) {
-  const [characterImage, setCharacterImage] = useState<string | null>(null);
+  const [characterImages, setCharacterImages] = useState<{ [key: string]: string }>({});
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('2k');
   const [generatingScenes, setGeneratingScenes] = useState<{ [key: string]: boolean }>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const { toast } = useToast();
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (name: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCharacterImage(reader.result as string);
+        setCharacterImages(prev => ({ ...prev, [name]: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const isAnyCharacterMissing = characters.some(c => !characterImages[c.name]);
+
   const generateScene = async (index: number) => {
-    if (!characterImage) {
+    if (isAnyCharacterMissing) {
       toast({
-        title: "Missing Reference",
-        description: "Please upload a character reference image first.",
+        title: "Missing References",
+        description: "Please upload portraits for all characters first.",
         variant: "destructive"
       });
       return;
@@ -62,9 +66,15 @@ export function VisualStoryboardGenerator({
         previousImage = generatedImages[scenes[index - 1].id];
       }
 
+      // Format characters for the AI
+      const characterRefs = characters.map(c => ({
+        name: c.name,
+        imageUri: characterImages[c.name]
+      }));
+
       // Generate the image
       const imageUrl = await generateVisualStoryboard({
-        characterImageUri: characterImage,
+        characters: characterRefs,
         previousStoryboardUri: previousImage,
         promptText: scene.imagePrompt,
         aspectRatio,
@@ -126,33 +136,45 @@ export function VisualStoryboardGenerator({
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-                Character Reference
+                Character Reference Portraits
               </Label>
-              <div
-                className="group relative border-2 border-dashed border-white/10 rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden bg-black/20"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {characterImage ? (
-                  <>
-                    <img src={characterImage} alt="Reference" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-xs font-bold text-white uppercase tracking-widest">Change Image</span>
+              <div className="grid grid-cols-2 gap-4">
+                {characters.map((char) => (
+                  <div key={char.name} className="space-y-2">
+                    <p className="text-[10px] font-bold truncate text-muted-foreground uppercase">{char.name}</p>
+                    <div
+                      className="group relative border-2 border-dashed border-white/10 rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden bg-black/20"
+                      onClick={() => fileInputRefs.current[char.name]?.click()}
+                    >
+                      {characterImages[char.name] ? (
+                        <>
+                          <img src={characterImages[char.name]} alt={char.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-[8px] font-bold text-white uppercase tracking-widest">Change</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="mt-2 text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center px-1">Upload {char.name}</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        ref={el => { fileInputRefs.current[char.name] = el }}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(char.name, e)}
+                      />
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="h-12 w-12 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <span className="mt-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Upload Portrait</span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
+                  </div>
+                ))}
               </div>
+              {isAnyCharacterMissing && (
+                <p className="text-[10px] text-destructive/80 font-bold uppercase animate-pulse">
+                  * All portraits required before rendering
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -269,7 +291,7 @@ export function VisualStoryboardGenerator({
                         variant="outline"
                         className="flex-1 bg-background/50 border-white/10"
                         onClick={() => generateScene(idx)}
-                        disabled={isGlobalGenerating || !characterImage || !isPreviousGenerated}
+                        disabled={isGlobalGenerating || isAnyCharacterMissing || !isPreviousGenerated}
                       >
                         {isGenerating ? (
                           <Loader2 className="h-3 w-3 animate-spin mr-2" />
