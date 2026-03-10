@@ -27,8 +27,7 @@ export function VisualStoryboardGenerator({
   const [characterImage, setCharacterImage] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('2k');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [generatingScenes, setGeneratingScenes] = useState<{ [key: string]: boolean }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -43,7 +42,7 @@ export function VisualStoryboardGenerator({
     }
   };
 
-  const handleGenerateAll = async () => {
+  const generateScene = async (index: number) => {
     if (!characterImage) {
       toast({
         title: "Missing Reference",
@@ -53,46 +52,42 @@ export function VisualStoryboardGenerator({
       return;
     }
 
-    setIsGenerating(true);
-    setProgress(0);
-    const newImages: { [key: string]: string } = {};
-    let previousImage: string | undefined = undefined;
+    const scene = scenes[index];
+    setGeneratingScenes(prev => ({ ...prev, [scene.id]: true }));
 
     try {
-      for (let i = 0; i < scenes.length; i++) {
-        const scene = scenes[i];
-
-        // Generate the image
-        const imageUrl = await generateVisualStoryboard({
-          characterImageUri: characterImage,
-          previousStoryboardUri: previousImage,
-          promptText: scene.imagePrompt,
-          aspectRatio,
-          resolution,
-        });
-
-        newImages[scene.id] = imageUrl;
-        setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
-
-        // Save to disk
-        await saveStoryboardImageAction(i, imageUrl);
-
-        previousImage = imageUrl;
-        setProgress(((i + 1) / scenes.length) * 100);
+      // Find previous scene image for continuity
+      let previousImage: string | undefined = undefined;
+      if (index > 0) {
+        previousImage = generatedImages[scenes[index - 1].id];
       }
 
+      // Generate the image
+      const imageUrl = await generateVisualStoryboard({
+        characterImageUri: characterImage,
+        previousStoryboardUri: previousImage,
+        promptText: scene.imagePrompt,
+        aspectRatio,
+        resolution,
+      });
+
+      setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
+
+      // Save to disk
+      await saveStoryboardImageAction(index, imageUrl);
+
       toast({
-        title: "Visual Production Complete",
-        description: `Successfully generated and saved ${scenes.length} storyboards.`,
+        title: `Scene ${scene.sceneNumber} Rendered`,
+        description: "Storyboard panel updated successfully.",
       });
     } catch (error: any) {
       toast({
         title: "Generation Error",
-        description: error.message || "Failed to generate visual storyboards.",
+        description: error.message || `Failed to generate Scene ${scene.sceneNumber}.`,
         variant: "destructive"
       });
     } finally {
-      setIsGenerating(false);
+      setGeneratingScenes(prev => ({ ...prev, [scene.id]: false }));
     }
   };
 
@@ -108,12 +103,14 @@ export function VisualStoryboardGenerator({
     document.body.removeChild(a);
   };
 
+  const isGlobalGenerating = Object.values(generatingScenes).some(Boolean);
+
   return (
     <div className="mt-16 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
       <div className="text-center space-y-2">
         <h2 className="text-4xl font-headline font-bold">Visual Production Studio</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Render your scripted scenes into high-fidelity cinematic grids using the Nano Banana 2 visual engine.
+          One-by-one cinematic rendering. Choose your sequence and refine individual frames.
         </p>
       </div>
 
@@ -189,45 +186,20 @@ export function VisualStoryboardGenerator({
             </div>
           </CardContent>
           <CardFooter>
-            <Button
-              className="w-full cinematic-gradient h-12 font-bold"
-              onClick={handleGenerateAll}
-              disabled={isGenerating || !characterImage}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Rendering Scenes...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  Render All Scenes
-                </>
-              )}
-            </Button>
+            <div className="w-full p-4 rounded-xl bg-primary/5 border border-primary/10 text-center">
+              <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Ready for Production</p>
+              <p className="text-xs text-muted-foreground mt-1">Generate scenes using the controls on each card below.</p>
+            </div>
           </CardFooter>
         </Card>
 
         <div className="lg:col-span-2 space-y-6">
-          {isGenerating && (
-            <Card className="glass-panel border-primary/20 bg-primary/5">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Production in Progress
-                  </span>
-                  <span className="font-mono">{Math.round(progress)}%</span>
-                </div>
-                <Progress value={progress} className="h-2 bg-white/5" />
-              </CardContent>
-            </Card>
-          )}
-
           <div className="grid gap-6">
             {scenes.map((scene, idx) => {
               const imageUrl = generatedImages[scene.id];
+              const isGenerating = generatingScenes[scene.id];
+              const isPreviousGenerated = idx === 0 || !!generatedImages[scenes[idx - 1].id];
+
               return (
                 <Card key={scene.id} className="glass-panel border-none overflow-hidden group">
                   <div className="relative aspect-video bg-black/40">
@@ -249,31 +221,64 @@ export function VisualStoryboardGenerator({
                             onClick={() => downloadImage(scene.id, idx)}
                           >
                             <Download className="h-4 w-4 mr-2" />
-                            Download 4-Grid
+                            Download
                           </Button>
                         </div>
                       </>
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
-                        <div className="h-16 w-16 rounded-2xl border-2 border-dashed border-white/10 flex items-center justify-center">
-                          <ImageIcon className="h-8 w-8" />
-                        </div>
-                        <p className="text-xs font-bold uppercase tracking-widest">Awaiting Render for Scene {idx + 1}</p>
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                            <p className="text-xs font-bold uppercase tracking-widest text-primary animate-pulse">Rendering Pixel Data...</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="h-16 w-16 rounded-2xl border-2 border-dashed border-white/10 flex items-center justify-center">
+                              <ImageIcon className="h-8 w-8" />
+                            </div>
+                            <p className="text-xs font-bold uppercase tracking-widest">Awaiting Render for Scene {idx + 1}</p>
+                            {!isPreviousGenerated && (
+                              <p className="text-[10px] text-primary/60 font-mono uppercase tracking-[0.2em]">Locked: Generate Scene {idx} First</p>
+                            )}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
-                  <CardContent className="p-4 bg-secondary/30 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-headline font-bold text-sm">Scene: {scene.sceneNumber}</h4>
-                      <p className="text-xs text-muted-foreground truncate max-w-md">
-                        {scene.imagePrompt.substring(0, 100)}...
-                      </p>
+                  <CardContent className="p-4 bg-secondary/30">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="font-headline font-bold text-sm">Scene: {scene.sceneNumber}</h4>
+                        <p className="text-xs text-muted-foreground truncate max-w-sm">
+                          {scene.imagePrompt.substring(0, 100)}...
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {imageUrl ? (
+                          <CheckCircle2 className="text-accent h-5 w-5" />
+                        ) : (
+                          <AlertCircle className="text-muted-foreground/30 h-5 w-5" />
+                        )}
+                      </div>
                     </div>
-                    {imageUrl ? (
-                      <CheckCircle2 className="text-accent h-5 w-5" />
-                    ) : (
-                      <AlertCircle className="text-muted-foreground/30 h-5 w-5" />
-                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 bg-background/50 border-white/10"
+                        onClick={() => generateScene(idx)}
+                        disabled={isGlobalGenerating || !characterImage || !isPreviousGenerated}
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                        ) : (
+                          <Wand2 className="h-3 w-3 mr-2" />
+                        )}
+                        {imageUrl ? "Re-generate" : "Generate Scene"}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
