@@ -20,6 +20,7 @@ interface StoryboardEditorProps {
 export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditorProps) {
   const [scenes, setScenes] = useState<StoryboardScene[]>(initialScenes);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const { toast } = useToast();
 
   const handlePanelChange = (sceneIndex: number, panelIndex: number, value: string) => {
@@ -35,6 +36,7 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
   };
 
   const handleSave = async () => {
+    if (hasSubmitted) return;
     setIsSaving(true);
 
     // Format: YYYYMMDD-HHMM
@@ -57,6 +59,7 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
         title: "Export Successful",
         description: result.message,
       });
+      setHasSubmitted(true);
     } else {
       toast({
         title: "Export Error",
@@ -150,8 +153,13 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
       </div>
 
       <div className="flex justify-center pb-12">
-        <Button size="lg" className="px-12 cinematic-gradient text-white border-none shadow-xl hover:scale-105 transition-transform" onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Writing Files..." : "Done Editing & Submit"}
+        <Button
+          size="lg"
+          className="px-12 cinematic-gradient text-white border-none shadow-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+          onClick={handleSave}
+          disabled={isSaving || hasSubmitted}
+        >
+          {isSaving ? "Writing Files..." : hasSubmitted ? "Files Written & Completed" : "Done Editing & Submit"}
         </Button>
       </div>
     </div>
