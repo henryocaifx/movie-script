@@ -42,7 +42,7 @@ Previous Storyboard Context (for continuity):
 
 Task:
 1. Analyze the provided character details and basic movie idea.
-2. Determine the necessary number of scenes to tell a full story arc, ensuring logical pacing and narrative progression. Aim for 3-5 scenes initially, but adapt based on the complexity of the idea.
+2. Determine the necessary number of scenes to tell a full story arc, ensuring logical pacing. You MUST generate between 2 and 4 scenes (min=2, max=4).
 3. For each scene, create a 4-grid storyboard layout.
 4. Crucially, ensure strict character consistency across all scenes and panels. Character clothing, age, and features must remain identical throughout the storyboard. Describe this consistency clearly in your panel descriptions and especially in the IMAGE_PROMPT.
 5. Use technical camera terms (e.g., "wide shot," "close-up," "dolly zoom," "rim lighting," "anamorphic lens," "tracking shot," "dutch angle," "macro focus") in your descriptions to convey specific visual intentions.
