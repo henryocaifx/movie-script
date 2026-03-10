@@ -68,7 +68,7 @@ Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
       promptParts.push({ media: { url: input.previousStoryboardUri } });
     }
 
-    promptParts.push({ text: `Generate the following storyboard scene: ${input.promptText}` });
+    promptParts.push({ text: `Analyze and generate a 4-panel visual storyboard based on the following markdown production script. Strictly follow the descriptions for Panel 1 through Panel 4, and use the 'AI Image Prompt' section as the master technical directive for the final render:\n\n${input.promptText}` });
 
     const { media } = await ai.generate({
       model: 'googleai/gemini-3.1-flash-image-preview',

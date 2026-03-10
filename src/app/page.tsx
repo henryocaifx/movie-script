@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { StoryboardInput } from '@/components/storyboard-input';
-import { StoryboardEditor } from '@/components/storyboard-editor';
 import { VisualStoryboardGenerator } from '@/components/visual-storyboard-generator';
 import { NanoBananaRenderer } from '@/components/nano-banana-renderer';
 import { generateCinematicStoryboard } from '@/ai/flows/generate-cinematic-storyboard';
-import { parseStoryboard, StoryboardScene } from '@/lib/storyboard-parser';
+import { parseStoryboard, StoryboardScene, serializeSceneToMarkdown } from '@/lib/storyboard-parser';
+import { saveScenesAction } from '@/app/actions/save-scenes';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -54,9 +54,18 @@ export default function AIFXCast() {
       }
 
       setScenes(parsedScenes);
+
+      // Automatically save the markdown files to the scenes folder
+      const exportData = parsedScenes.map((scene, i) => ({
+        filename: `scene-${i + 1}.md`,
+        content: serializeSceneToMarkdown(scene),
+      }));
+
+      await saveScenesAction(exportData, ts);
+
       toast({
         title: "Storyboard Drafted",
-        description: `Successfully generated ${parsedScenes.length} cinematic scenes.`,
+        description: `Successfully generated and saved ${parsedScenes.length} cinematic scenes.`,
       });
     } catch (error: any) {
       toast({
@@ -112,7 +121,6 @@ export default function AIFXCast() {
           </div>
         ) : (
           <div className="space-y-16">
-            <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
             <VisualStoryboardGenerator
               characters={characters}
               artStyle={artStyle}
@@ -120,6 +128,7 @@ export default function AIFXCast() {
               generatedImages={generatedImages}
               setGeneratedImages={setGeneratedImages}
               sessionTimestamp={sessionTimestamp}
+              onReset={handleReset}
             />
             <NanoBananaRenderer
               scenes={scenes}

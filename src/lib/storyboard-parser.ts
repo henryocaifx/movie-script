@@ -50,3 +50,26 @@ export function serializeSceneToMarkdown(scene: StoryboardScene): string {
 ${scene.imagePrompt}
 `;
 }
+
+export function parseMarkdownToScene(content: string, sceneNumber: string): StoryboardScene {
+  const panels: string[] = [];
+  const panel1Match = content.match(/\*\*Panel 1\*\*: (.*)/);
+  const panel2Match = content.match(/\*\*Panel 2\*\*: (.*)/);
+  const panel3Match = content.match(/\*\*Panel 3\*\*: (.*)/);
+  const panel4Match = content.match(/\*\*Panel 4\*\*: (.*)/);
+
+  panels.push(panel1Match ? panel1Match[1].trim() : '');
+  panels.push(panel2Match ? panel2Match[1].trim() : '');
+  panels.push(panel3Match ? panel3Match[1].trim() : '');
+  panels.push(panel4Match ? panel4Match[1].trim() : '');
+
+  const promptMatch = content.match(/## AI Image Prompt\n([\s\S]*)/);
+  const imagePrompt = promptMatch ? promptMatch[1].trim() : '';
+
+  return {
+    id: `scene-${sceneNumber}`,
+    sceneNumber,
+    panels,
+    imagePrompt
+  };
+}

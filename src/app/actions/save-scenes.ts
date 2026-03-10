@@ -31,3 +31,17 @@ export async function saveScenesAction(scenes: { filename: string; content: stri
     return { success: false, message: error.message || 'Failed to save scenes to disk.' };
   }
 }
+
+export async function getSceneAction(filename: string, subDir: string) {
+  try {
+    const filePath = path.join(process.cwd(), 'scenes', subDir, filename);
+    if (!fs.existsSync(filePath)) {
+      return { success: false, message: `File not found: ${filePath}` };
+    }
+    const content = fs.readFileSync(filePath, 'utf8');
+    return { success: true, content };
+  } catch (error: any) {
+    console.error('Failed to read scene:', error);
+    return { success: false, message: error.message || 'Failed to read scene from disk.' };
+  }
+}

@@ -87,70 +87,72 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-headline font-bold text-foreground">Interactive Storyboard</h2>
-          <p className="text-muted-foreground">Fine-tune each scene's technical details and prompts.</p>
+          {!hasSubmitted && <p className="text-muted-foreground">Fine-tune each scene's technical details and prompts.</p>}
         </div>
         <div className="flex gap-4">
           <Button variant="outline" onClick={onComplete}>New Idea</Button>
         </div>
       </div>
 
-      <div className="grid gap-8">
-        {scenes.map((scene, sceneIdx) => (
-          <Card key={scene.id} className="glass-panel border-none overflow-hidden shadow-2xl">
-            <CardHeader className="bg-secondary/50 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full cinematic-gradient flex items-center justify-center text-white font-bold">
-                    {sceneIdx + 1}
-                  </div>
-                  <div>
-                    <CardTitle className="font-headline text-xl">Scene: {scene.sceneNumber}</CardTitle>
-                    <CardDescription>Multi-panel cinematic sequence</CardDescription>
-                  </div>
-                </div>
-                <Film className="text-accent h-5 w-5 opacity-50" />
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {scene.panels.map((panel, panelIdx) => (
-                  <div key={panelIdx} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-                        Panel {panelIdx + 1}
-                      </Label>
-                      <CheckCircle className="h-3 w-3 text-accent" />
+      {!hasSubmitted && (
+        <div className="grid gap-8">
+          {scenes.map((scene, sceneIdx) => (
+            <Card key={scene.id} className="glass-panel border-none overflow-hidden shadow-2xl">
+              <CardHeader className="bg-secondary/50 border-b border-border/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full cinematic-gradient flex items-center justify-center text-white font-bold">
+                      {sceneIdx + 1}
                     </div>
-                    <Textarea
-                      value={panel}
-                      onChange={(e) => handlePanelChange(sceneIdx, panelIdx, e.target.value)}
-                      placeholder={`Describe action and camera angle for panel ${panelIdx + 1}...`}
-                      className="min-h-[100px] bg-background/50 focus:border-primary/50 transition-all resize-none"
-                    />
+                    <div>
+                      <CardTitle className="font-headline text-xl">Scene: {scene.sceneNumber}</CardTitle>
+                      <CardDescription>Multi-panel cinematic sequence</CardDescription>
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              <Separator className="my-8 opacity-20" />
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-bold flex items-center gap-2">
-                    <Download className="h-4 w-4 text-accent" />
-                    Master Image Generation Prompt (4-Grid)
-                  </Label>
+                  <Film className="text-accent h-5 w-5 opacity-50" />
                 </div>
-                <Textarea
-                  value={scene.imagePrompt}
-                  onChange={(e) => handlePromptChange(sceneIdx, e.target.value)}
-                  placeholder="The consolidated prompt for all panels..."
-                  className="min-h-[120px] bg-secondary/30 font-mono text-sm border-accent/20 focus:border-accent/50 transition-all"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {scene.panels.map((panel, panelIdx) => (
+                    <div key={panelIdx} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                          Panel {panelIdx + 1}
+                        </Label>
+                        <CheckCircle className="h-3 w-3 text-accent" />
+                      </div>
+                      <Textarea
+                        value={panel}
+                        onChange={(e) => handlePanelChange(sceneIdx, panelIdx, e.target.value)}
+                        placeholder={`Describe action and camera angle for panel ${panelIdx + 1}...`}
+                        className="min-h-[100px] bg-background/50 focus:border-primary/50 transition-all resize-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <Separator className="my-8 opacity-20" />
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-bold flex items-center gap-2">
+                      <Download className="h-4 w-4 text-accent" />
+                      Master Image Generation Prompt (4-Grid)
+                    </Label>
+                  </div>
+                  <Textarea
+                    value={scene.imagePrompt}
+                    onChange={(e) => handlePromptChange(sceneIdx, e.target.value)}
+                    placeholder="The consolidated prompt for all panels..."
+                    className="min-h-[120px] bg-secondary/30 font-mono text-sm border-accent/20 focus:border-accent/50 transition-all"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="flex justify-center pb-12">
         <Button

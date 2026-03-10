@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { StoryboardScene } from '@/lib/storyboard-parser';
+import { StoryboardScene, serializeSceneToMarkdown, parseMarkdownToScene } from '@/lib/storyboard-parser';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { ImageIcon, Wand2, Download, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { ImageIcon, Wand2, Download, CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react';
 import { generateVisualStoryboard } from '@/ai/flows/generate-visual-storyboard';
 import { saveGeneratedStoryboardAction } from '@/app/actions/save-storyboard-image';
+import { saveScenesAction, getSceneAction } from '@/app/actions/save-scenes';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
@@ -20,6 +23,7 @@ interface VisualStoryboardGeneratorProps {
   generatedImages: { [key: string]: string };
   setGeneratedImages: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
   sessionTimestamp: string;
+  onReset: () => void;
 }
 
 export function VisualStoryboardGenerator({
@@ -28,12 +32,57 @@ export function VisualStoryboardGenerator({
   scenes,
   generatedImages,
   setGeneratedImages,
-  sessionTimestamp
+  sessionTimestamp,
+  onReset
 }: VisualStoryboardGeneratorProps) {
+  const [localScenes, setLocalScenes] = useState<StoryboardScene[]>(scenes);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('2k');
   const [generatingScenes, setGeneratingScenes] = useState<{ [key: string]: boolean }>({});
+  const [savingScenes, setSavingScenes] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
+
+  const handlePanelChange = (sceneIdx: number, panelIdx: number, value: string) => {
+    const newScenes = [...localScenes];
+    newScenes[sceneIdx].panels[panelIdx] = value;
+    setLocalScenes(newScenes);
+  };
+
+  const handlePromptChange = (sceneIdx: number, value: string) => {
+    const newScenes = [...localScenes];
+    newScenes[sceneIdx].imagePrompt = value;
+    setLocalScenes(newScenes);
+  };
+
+  const saveEdition = async (idx: number) => {
+    const scene = localScenes[idx];
+    setSavingScenes(prev => ({ ...prev, [scene.id]: true }));
+
+    try {
+      const content = serializeSceneToMarkdown(scene);
+      const result = await saveScenesAction(
+        [{ filename: `scene-${idx + 1}.md`, content }],
+        sessionTimestamp
+      );
+
+      if (result.success) {
+        toast({
+          title: "Scene Updated",
+          description: `Successfully saved changes to Scene ${idx + 1}.`,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Save Error",
+        description: error.message || "Failed to save scene changes.",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingScenes(prev => ({ ...prev, [scene.id]: false }));
+    }
+  };
 
   const isAnyCharacterMissing = characters.some(c => !c.image);
 
@@ -47,53 +96,68 @@ export function VisualStoryboardGenerator({
       return;
     }
 
-    const scene = scenes[index];
-    setGeneratingScenes(prev => ({ ...prev, [scene.id]: true }));
+    const sceneId = localScenes[index].id;
+    const sceneNumber = localScenes[index].sceneNumber;
+    setGeneratingScenes(prev => ({ ...prev, [sceneId]: true }));
 
     try {
-      // Find previous scene image for continuity
-      let previousImage: string | undefined = undefined;
-      if (index > 0) {
-        previousImage = generatedImages[scenes[index - 1].id];
+      // 1. Auto-save current UI state to disk before generating
+      // This ensures the "Source of Truth" file is updated with user edits
+      const currentScene = localScenes[index];
+      const markdownContent = serializeSceneToMarkdown(currentScene);
+
+      const saveResult = await saveScenesAction(
+        [{ filename: `scene-${sceneNumber}.md`, content: markdownContent }],
+        sessionTimestamp
+      );
+
+      if (!saveResult.success) {
+        console.warn("Failed to auto-save scene to disk before generation:", saveResult.message);
       }
 
-      // Format characters for the AI
+      // 2. Find previous scene image for continuity
+      let previousImage: string | undefined = undefined;
+      if (index > 0) {
+        previousImage = generatedImages[localScenes[index - 1].id];
+      }
+
+      // 3. Format characters for the AI
       const characterRefs = characters.map(c => ({
         name: c.name,
         imageUri: c.image || ''
       }));
 
-      // Generate the image
+      // 4. Generate the image using the full markdown source of the scene
       const imageUrl = await generateVisualStoryboard({
         characters: characterRefs,
         artStyle,
         previousStoryboardUri: previousImage,
-        promptText: scene.imagePrompt,
+        promptText: markdownContent,
         aspectRatio,
         resolution,
       });
 
-      setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
+      setGeneratedImages(prev => ({ ...prev, [sceneId]: imageUrl }));
 
-      // Save to storyboard/generated/yyyymmdd-hhmm/storyboard-{sceneNumber}.png
+      // 5. Save the generated image
       await saveGeneratedStoryboardAction(
-        parseInt(scene.sceneNumber),
+        parseInt(sceneNumber),
         imageUrl,
         sessionTimestamp
       );
 
       toast({
-        title: `Scene ${scene.sceneNumber} Rendered`,
-        description: "Storyboard panel updated successfully.",
+        title: `Scene ${sceneNumber} Rendered`,
+        description: "Storyboard updated and changes saved to disk.",
       });
     } catch (error: any) {
       toast({
         title: "Generation Error",
-        description: error.message || `Failed to generate Scene ${scene.sceneNumber}.`,
+        description: error.message || `Failed to generate Scene ${index + 1}.`,
         variant: "destructive"
       });
     } finally {
-      setGeneratingScenes(prev => ({ ...prev, [scene.id]: false }));
+      setGeneratingScenes(prev => ({ ...prev, [sceneId]: false }));
     }
   };
 
@@ -113,11 +177,16 @@ export function VisualStoryboardGenerator({
 
   return (
     <div className="mt-16 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      <div className="text-center space-y-2">
-        <h2 className="text-4xl font-headline font-bold">Visual Production Studio</h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          One-by-one cinematic rendering. Choose your sequence and refine individual frames.
-        </p>
+      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-8">
+        <div className="text-left space-y-2">
+          <h2 className="text-4xl font-headline font-bold">Visual Production Studio</h2>
+          <p className="text-muted-foreground">
+            One-by-one cinematic rendering. Edit panels and prompts below before generating.
+          </p>
+        </div>
+        <Button variant="outline" className="h-10 bg-background/50 border-white/10" onClick={onReset}>
+          New Production
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -195,10 +264,11 @@ export function VisualStoryboardGenerator({
 
         <div className="lg:col-span-2 space-y-6">
           <div className="grid gap-6">
-            {scenes.map((scene, idx) => {
+            {localScenes.map((scene, idx) => {
               const imageUrl = generatedImages[scene.id];
               const isGenerating = generatingScenes[scene.id];
-              const isPreviousGenerated = idx === 0 || !!generatedImages[scenes[idx - 1].id];
+              const isSaving = savingScenes[scene.id];
+              const isPreviousGenerated = idx === 0 || !!generatedImages[localScenes[idx - 1].id];
 
               return (
                 <Card key={scene.id} className="glass-panel border-none overflow-hidden group">
@@ -277,6 +347,54 @@ export function VisualStoryboardGenerator({
                           <Wand2 className="h-3 w-3 mr-2" />
                         )}
                         {imageUrl ? "Re-generate" : "Generate Scene"}
+                      </Button>
+                    </div>
+
+                    <Separator className="my-6 opacity-20" />
+
+                    {/* Inline Editor */}
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        {scene.panels.map((panel, panelIdx) => (
+                          <div key={panelIdx} className="space-y-1">
+                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                              Panel {panelIdx + 1}
+                            </Label>
+                            <Textarea
+                              value={panel}
+                              onChange={(e) => handlePanelChange(idx, panelIdx, e.target.value)}
+                              className="min-h-[80px] text-xs bg-background/20 border-white/5 focus:border-primary/30 resize-none"
+                              placeholder={`Panel ${panelIdx + 1} details...`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-2">
+                          <CheckCircle2 className="h-3 w-3 text-accent" />
+                          Master Image Prompt (4-Grid)
+                        </Label>
+                        <Textarea
+                          value={scene.imagePrompt}
+                          onChange={(e) => handlePromptChange(idx, e.target.value)}
+                          className="min-h-[100px] text-xs bg-secondary/20 font-mono border-white/5 focus:border-accent/30"
+                          placeholder="Technical prompt for the 4-panel render..."
+                        />
+                      </div>
+
+                      <Button
+                        size="sm"
+                        className="w-full bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 transition-all gap-2 h-9"
+                        onClick={() => saveEdition(idx)}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Save className="h-3 w-3" />
+                        )}
+                        Submit Edition
                       </Button>
                     </div>
                   </CardContent>
