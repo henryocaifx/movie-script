@@ -8,25 +8,29 @@ import { NanoBananaRenderer } from '@/components/nano-banana-renderer';
 import { generateCinematicStoryboard } from '@/ai/flows/generate-cinematic-storyboard';
 import { parseStoryboard, StoryboardScene } from '@/lib/storyboard-parser';
 import { useToast } from '@/hooks/use-toast';
-import { Clapperboard, Terminal } from 'lucide-react';
-import { getLatestStoryboardContextAction } from '@/app/actions/get-latest-context';
+
 
 export default function AIFXCast() {
   const [isLoading, setIsLoading] = useState(false);
   const [characters, setCharacters] = useState<{ name: string; description: string }[]>([]);
   const [scenes, setScenes] = useState<StoryboardScene[] | null>(null);
   const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
+  const [sessionTimestamp, setSessionTimestamp] = useState<string>('');
   const { toast } = useToast();
 
   const handleGenerate = async (values: { characters: { name: string; description: string }[]; movieIdea: string }) => {
     setIsLoading(true);
     setCharacters(values.characters);
     setGeneratedImages({}); // Clear previous images
+    // Create a session timestamp for this storyboard run — all scene renders will share this folder
+    const now = new Date();
+    const ts = now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, '0') +
+      now.getDate().toString().padStart(2, '0') + '-' +
+      now.getHours().toString().padStart(2, '0') +
+      now.getMinutes().toString().padStart(2, '0');
+    setSessionTimestamp(ts);
     try {
-      // Get context from previous exports
-      const contextResult = await getLatestStoryboardContextAction();
-      const previousContext = contextResult.success ? contextResult.context : '';
-
       // Format characters for the text AI
       const charactersDescription = values.characters
         .map(c => `${c.name}: ${c.description}`)
@@ -35,7 +39,6 @@ export default function AIFXCast() {
       const rawOutput = await generateCinematicStoryboard({
         charactersDescription,
         movieIdea: values.movieIdea,
-        previousContext
       });
       const parsedScenes = parseStoryboard(rawOutput);
 
@@ -63,6 +66,7 @@ export default function AIFXCast() {
     setScenes(null);
     setCharacters([]);
     setGeneratedImages({});
+    setSessionTimestamp('');
   };
 
   return (
@@ -107,6 +111,7 @@ export default function AIFXCast() {
               scenes={scenes}
               generatedImages={generatedImages}
               setGeneratedImages={setGeneratedImages}
+              sessionTimestamp={sessionTimestamp}
             />
             <NanoBananaRenderer
               scenes={scenes}

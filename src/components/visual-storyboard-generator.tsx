@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { ImageIcon, Wand2, Download, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { generateVisualStoryboard } from '@/ai/flows/generate-visual-storyboard';
-import { saveStoryboardImageAction } from '@/app/actions/save-storyboard-image';
+import { saveGeneratedStoryboardAction } from '@/app/actions/save-storyboard-image';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
@@ -18,13 +18,15 @@ interface VisualStoryboardGeneratorProps {
   scenes: StoryboardScene[];
   generatedImages: { [key: string]: string };
   setGeneratedImages: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
+  sessionTimestamp: string;
 }
 
 export function VisualStoryboardGenerator({
   characters,
   scenes,
   generatedImages,
-  setGeneratedImages
+  setGeneratedImages,
+  sessionTimestamp
 }: VisualStoryboardGeneratorProps) {
   const [characterImages, setCharacterImages] = useState<{ [key: string]: string }>({});
   const [aspectRatio, setAspectRatio] = useState('16:9');
@@ -83,8 +85,12 @@ export function VisualStoryboardGenerator({
 
       setGeneratedImages(prev => ({ ...prev, [scene.id]: imageUrl }));
 
-      // Save to disk
-      await saveStoryboardImageAction(index, imageUrl);
+      // Save to storyboard/generated/yyyymmdd-hhmm/storyboard-{sceneNumber}.png
+      await saveGeneratedStoryboardAction(
+        parseInt(scene.sceneNumber),
+        imageUrl,
+        sessionTimestamp
+      );
 
       toast({
         title: `Scene ${scene.sceneNumber} Rendered`,
