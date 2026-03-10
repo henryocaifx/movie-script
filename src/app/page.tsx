@@ -61,13 +61,12 @@ export default function AIFXCast() {
       {/* Cinematic Header Overlay */}
       <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 px-6 h-16 flex items-center">
         <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg cinematic-gradient">
-            <Clapperboard className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-xl font-headline font-bold tracking-tighter bg-clip-text text-transparent cinematic-gradient">
-            AIFX CAST
-          </h1>
+        <div className="flex items-center">
+          <img
+            src="/aifx-cast-header.png"
+            alt="AIFX Cast"
+            className="h-10 w-auto object-contain"
+          />
         </div>
         <div className="flex-1 flex justify-end">
           <div className="flex items-center gap-2">
@@ -85,8 +84,7 @@ export default function AIFXCast() {
                 Your Movie. <span className="text-primary italic">AI Paced.</span>
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Enter your premise and let Gemini-3 transform it into a professionally timed
-                multi-scene storyboard with technical camera direction.
+                Turn your idea into a storyboard with AIFX Cast.
               </p>
             </div>
 
@@ -110,12 +108,15 @@ export default function AIFXCast() {
 
       {/* Footer Branding */}
       <footer className="mt-20 py-12 border-t border-white/5 bg-black/20">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-
-
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center">
+          <img
+            src="/aifx-cast-footer.png"
+            alt="AIFX Cast"
+            className="h-12 w-auto object-contain"
+          />
         </div>
         <div className="container mx-auto px-4 mt-12 pt-8 border-t border-white/5 text-center text-xs text-muted-foreground/40">
-          © {new Date().getFullYear()} AIFX Cast Studio. All cinematic rights reserved.
+          © {new Date().getFullYear()} AIFX Cast. All Rights Reserved.
         </div>
       </footer>
     </div>

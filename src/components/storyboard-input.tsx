@@ -43,7 +43,7 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
           </div>
           <CardTitle className="text-4xl font-headline font-bold">Initialize New Script</CardTitle>
           <CardDescription className="text-lg">
-            Describe your cast and the core premise. Our AI Cinematographer will handle the pacing.
+            Describe your cast and premise. Our AI Cinematographer will handle the pacing.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -59,10 +59,10 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                       Character Manifest
                     </FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="e.g., Alex (28), a cynical noir detective with a heavy wool coat. Maya (30), a high-tech thief wearing sleek obsidian armor..." 
+                      <Textarea
+                        placeholder="e.g., Alex (28), a cynical noir detective with a heavy wool coat. Maya (30), a high-tech thief wearing sleek obsidian armor..."
                         className="min-h-[100px] bg-background/50 border-border/50 focus:border-primary"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormDescription>Define names, ages, clothing, and distinguishing traits for consistency.</FormDescription>
@@ -81,10 +81,10 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                       Premise / Core Idea
                     </FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="e.g., In a neon-drenched futuristic Tokyo, a retired detective is pulled back into action when a digital ghost starts haunting the city's power grid..." 
+                      <Textarea
+                        placeholder="e.g., In a neon-drenched futuristic Tokyo, a retired detective is pulled back into action when a digital ghost starts haunting the city's power grid..."
                         className="min-h-[150px] bg-background/50 border-border/50 focus:border-primary"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormDescription>Describe the basic plot arc or a specific high-stakes sequence.</FormDescription>
@@ -93,8 +93,8 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                 )}
               />
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full h-14 text-lg font-bold cinematic-gradient border-none hover:shadow-primary/20 hover:shadow-2xl transition-all"
                 disabled={isLoading}
               >
@@ -114,19 +114,19 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
           </Form>
         </CardContent>
       </Card>
-      
+
       <div className="mt-8 grid grid-cols-3 gap-4 text-center">
         <div className="p-4 rounded-xl glass-panel">
-          <p className="text-accent font-bold">8K Cinematic</p>
+          <p className="text-accent font-bold">Up to 4K Cinematic</p>
           <p className="text-xs text-muted-foreground uppercase tracking-widest">Output Quality</p>
         </div>
         <div className="p-4 rounded-xl glass-panel">
-          <p className="text-accent font-bold">Gemini 3 Flash</p>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">Core Engine</p>
+          <p className="text-accent font-bold">Google Gemini</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">Text Engine</p>
         </div>
         <div className="p-4 rounded-xl glass-panel">
-          <p className="text-accent font-bold">Consistent</p>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">Character Engine</p>
+          <p className="text-accent font-bold">Nano Banana 2</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">Image Engine</p>
         </div>
       </div>
     </div>
