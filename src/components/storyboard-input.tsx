@@ -9,12 +9,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Users, Clapperboard, Film, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, Users, Clapperboard, Film, Plus, Trash2, ImageIcon } from 'lucide-react';
 
 const formSchema = z.object({
   characters: z.array(z.object({
     name: z.string().min(1, 'Character name is required.'),
     description: z.string().min(10, 'Please provide more character details.'),
+    image: z.string().optional(),
   })).min(1, 'Please add at least one character.'),
   movieIdea: z.string().min(20, 'Please elaborate a bit more on your movie premise.'),
 });
@@ -30,7 +31,7 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      characters: [{ name: '', description: '' }],
+      characters: [{ name: '', description: '', image: '' }],
       movieIdea: '',
     },
   });
@@ -39,6 +40,17 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
     control: form.control,
     name: "characters"
   });
+
+  const handleImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue(`characters.${index}.image`, reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto animate-in fade-in zoom-in-95 duration-500">
@@ -68,7 +80,7 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                     variant="outline"
                     size="sm"
                     className="h-8 gap-1 bg-background/50 border-white/10"
-                    onClick={() => append({ name: '', description: '' })}
+                    onClick={() => append({ name: '', description: '', image: '' })}
                   >
                     <Plus className="h-3 w-3" />
                     Add Character
@@ -78,54 +90,101 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                 {fields.map((field, index) => (
                   <div key={field.id} className="p-4 rounded-xl bg-background/30 border border-white/5 space-y-4 relative group">
                     <div className="flex gap-4">
+                      {/* Character Image Upload */}
                       <FormField
                         control={form.control}
-                        name={`characters.${index}.name`}
+                        name={`characters.${index}.image`}
                         render={({ field }) => (
-                          <FormItem className="flex-1">
+                          <FormItem>
                             <FormControl>
-                              <Input
-                                placeholder="Character Name (e.g. Alex)"
-                                className="bg-background/50 border-border/50 focus:border-primary"
-                                {...field}
-                              />
+                              <div className="flex flex-col items-center">
+                                <div
+                                  className="relative h-24 w-24 border-2 border-dashed border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-primary/50 transition-all flex items-center justify-center bg-black/20"
+                                  onClick={() => {
+                                    const input = document.getElementById(`char-image-${index}`);
+                                    input?.click();
+                                  }}
+                                >
+                                  {field.value ? (
+                                    <>
+                                      <img src={field.value} alt="Reference" className="w-full h-full object-cover" />
+                                      <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <span className="text-[8px] font-bold text-white uppercase tracking-widest">Change</span>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="flex flex-col items-center text-muted-foreground">
+                                      <ImageIcon className="h-6 w-6 mb-1" />
+                                      <span className="text-[8px] font-bold uppercase tracking-widest">Portrait</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <input
+                                  id={`char-image-${index}`}
+                                  type="file"
+                                  className="hidden"
+                                  accept="image/*"
+                                  onChange={(e) => handleImageUpload(index, e)}
+                                />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10 text-muted-foreground hover:text-destructive transition-colors"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
 
-                    <FormField
-                      control={form.control}
-                      name={`characters.${index}.description`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Describe age, clothing, personality, and distinguishing traits."
-                              className="min-h-[80px] bg-background/50 border-border/50 focus:border-primary"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <div className="flex-1 space-y-4">
+                        <div className="flex gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`characters.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem className="flex-1">
+                                <FormControl>
+                                  <Input
+                                    placeholder="Character Name (e.g. Alex)"
+                                    className="bg-background/50 border-border/50 focus:border-primary"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-10 w-10 text-muted-foreground hover:text-destructive transition-colors"
+                              onClick={() => remove(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name={`characters.${index}.description`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Describe age, clothing, personality, and distinguishing traits."
+                                  className="min-h-[60px] bg-background/50 border-border/50 focus:border-primary"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
-                <FormDescription>Define names and details for each character to ensure consistency in the storyboard.</FormDescription>
+                <FormDescription>Define names, upload reference portraits, and describe details for each character.</FormDescription>
               </div>
 
               <FormField

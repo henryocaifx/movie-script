@@ -12,13 +12,13 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function AIFXCast() {
   const [isLoading, setIsLoading] = useState(false);
-  const [characters, setCharacters] = useState<{ name: string; description: string }[]>([]);
+  const [characters, setCharacters] = useState<{ name: string; description: string; image?: string }[]>([]);
   const [scenes, setScenes] = useState<StoryboardScene[] | null>(null);
   const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
   const [sessionTimestamp, setSessionTimestamp] = useState<string>('');
   const { toast } = useToast();
 
-  const handleGenerate = async (values: { characters: { name: string; description: string }[]; movieIdea: string }) => {
+  const handleGenerate = async (values: { characters: { name: string; description: string; image?: string }[]; movieIdea: string }) => {
     setIsLoading(true);
     setCharacters(values.characters);
     setGeneratedImages({}); // Clear previous images

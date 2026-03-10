@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
 interface VisualStoryboardGeneratorProps {
-  characters: { name: string; description: string }[];
+  characters: { name: string; description: string; image?: string }[];
   scenes: StoryboardScene[];
   generatedImages: { [key: string]: string };
   setGeneratedImages: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
@@ -28,25 +28,12 @@ export function VisualStoryboardGenerator({
   setGeneratedImages,
   sessionTimestamp
 }: VisualStoryboardGeneratorProps) {
-  const [characterImages, setCharacterImages] = useState<{ [key: string]: string }>({});
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('2k');
   const [generatingScenes, setGeneratingScenes] = useState<{ [key: string]: boolean }>({});
-  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const { toast } = useToast();
 
-  const handleImageUpload = (name: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCharacterImages(prev => ({ ...prev, [name]: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const isAnyCharacterMissing = characters.some(c => !characterImages[c.name]);
+  const isAnyCharacterMissing = characters.some(c => !c.image);
 
   const generateScene = async (index: number) => {
     if (isAnyCharacterMissing) {
@@ -71,7 +58,7 @@ export function VisualStoryboardGenerator({
       // Format characters for the AI
       const characterRefs = characters.map(c => ({
         name: c.name,
-        imageUri: characterImages[c.name]
+        imageUri: c.image || ''
       }));
 
       // Generate the image
@@ -149,38 +136,20 @@ export function VisualStoryboardGenerator({
                   <div key={char.name} className="space-y-2">
                     <p className="text-[10px] font-bold truncate text-muted-foreground uppercase">{char.name}</p>
                     <div
-                      className="group relative border-2 border-dashed border-white/10 rounded-xl aspect-square flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden bg-black/20"
-                      onClick={() => fileInputRefs.current[char.name]?.click()}
+                      className="group relative border-2 border-white/10 rounded-xl aspect-square flex flex-col items-center justify-center overflow-hidden bg-black/20"
                     >
-                      {characterImages[char.name] ? (
-                        <>
-                          <img src={characterImages[char.name]} alt={char.name} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <span className="text-[8px] font-bold text-white uppercase tracking-widest">Change</span>
-                          </div>
-                        </>
+                      {char.image ? (
+                        <img src={char.image} alt={char.name} className="w-full h-full object-cover" />
                       ) : (
-                        <>
-                          <ImageIcon className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                          <span className="mt-2 text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center px-1">Upload {char.name}</span>
-                        </>
+                        <div className="flex flex-col items-center opacity-30 text-muted-foreground">
+                          <ImageIcon className="h-8 w-8" />
+                          <span className="mt-2 text-[8px] font-bold uppercase tracking-widest text-center px-1">No Portrait</span>
+                        </div>
                       )}
-                      <input
-                        type="file"
-                        ref={el => { fileInputRefs.current[char.name] = el }}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(char.name, e)}
-                      />
                     </div>
                   </div>
                 ))}
               </div>
-              {isAnyCharacterMissing && (
-                <p className="text-[10px] text-destructive/80 font-bold uppercase animate-pulse">
-                  * All portraits required before rendering
-                </p>
-              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
