@@ -1,9 +1,9 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'CineScript AI | Cinematic Storyboard Generator',
+  title: 'AIFX Cast | Cinematic Storyboard Generator',
   description: 'Transform your movie ideas into professional storyboards using Gemini AI.',
 };
 

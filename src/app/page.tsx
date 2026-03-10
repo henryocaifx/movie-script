@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Clapperboard, Terminal } from 'lucide-react';
 import { getLatestStoryboardContextAction } from '@/app/actions/get-latest-context';
 
-export default function CineScriptAI() {
+export default function AIFXCast() {
   const [isLoading, setIsLoading] = useState(false);
   const [scenes, setScenes] = useState<StoryboardScene[] | null>(null);
   const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
@@ -59,23 +59,21 @@ export default function CineScriptAI() {
   return (
     <div className="min-h-screen selection:bg-primary selection:text-white">
       {/* Cinematic Header Overlay */}
-      <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 px-6 h-16 flex items-center">
+        <div className="flex-1" />
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg cinematic-gradient">
             <Clapperboard className="h-5 w-5 text-white" />
           </div>
           <h1 className="text-xl font-headline font-bold tracking-tighter bg-clip-text text-transparent cinematic-gradient">
-            CINESCRIPT AI
+            AIFX CAST
           </h1>
         </div>
-        <div className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest font-semibold text-muted-foreground">
-          <span className="hover:text-primary transition-colors cursor-default">Storyboard</span>
-          <span className="hover:text-primary transition-colors cursor-default">Cinematography</span>
-          <span className="hover:text-primary transition-colors cursor-default">Export</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-          <span className="text-[10px] uppercase font-bold text-accent">Studio Online</span>
+        <div className="flex-1 flex justify-end">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-[10px] uppercase font-bold text-accent">Studio Online</span>
+          </div>
         </div>
       </header>
 
@@ -113,39 +111,11 @@ export default function CineScriptAI() {
       {/* Footer Branding */}
       <footer className="mt-20 py-12 border-t border-white/5 bg-black/20">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Clapperboard className="h-4 w-4 text-muted-foreground" />
-              <span className="font-headline font-bold text-muted-foreground tracking-tighter">CINESCRIPT AI</span>
-            </div>
-            <p className="text-sm text-muted-foreground/60 max-w-xs">
-              Professional cinematography tools powered by the next generation of generative AI.
-            </p>
-          </div>
-          <div className="flex gap-12">
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-primary">Capabilities</h4>
-              <ul className="text-sm text-muted-foreground space-y-2">
-                <li>Character Continuity</li>
-                <li>Scene Sequencing</li>
-                <li>Camera Technicals</li>
-              </ul>
-            </div>
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-primary">System</h4>
-              <ul className="text-sm text-muted-foreground space-y-2">
-                <li className="flex items-center gap-2">
-                  <Terminal className="h-3 w-3" />
-                  Gemini-3 Flash
-                </li>
-                <li>8K Prompting</li>
-                <li>MD Export</li>
-              </ul>
-            </div>
-          </div>
+
+
         </div>
         <div className="container mx-auto px-4 mt-12 pt-8 border-t border-white/5 text-center text-xs text-muted-foreground/40">
-          © {new Date().getFullYear()} CineScript AI Studio. All cinematic rights reserved.
+          © {new Date().getFullYear()} AIFX Cast Studio. All cinematic rights reserved.
         </div>
       </footer>
     </div>

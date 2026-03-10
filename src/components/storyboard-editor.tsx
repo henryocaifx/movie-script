@@ -88,14 +88,6 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
         </div>
         <div className="flex gap-4">
           <Button variant="outline" onClick={onComplete}>New Idea</Button>
-          <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Done Editing & Submit
-              </>
-            )}
-          </Button>
         </div>
       </div>
 
@@ -159,7 +151,7 @@ export function StoryboardEditor({ initialScenes, onComplete }: StoryboardEditor
 
       <div className="flex justify-center pb-12">
         <Button size="lg" className="px-12 cinematic-gradient text-white border-none shadow-xl hover:scale-105 transition-transform" onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Writing Files..." : "Export All Scenes (.md)"}
+          {isSaving ? "Writing Files..." : "Done Editing & Submit"}
         </Button>
       </div>
     </div>
