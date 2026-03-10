@@ -15,6 +15,7 @@ import Image from 'next/image';
 
 interface VisualStoryboardGeneratorProps {
   characters: { name: string; description: string; image?: string }[];
+  artStyle: string;
   scenes: StoryboardScene[];
   generatedImages: { [key: string]: string };
   setGeneratedImages: React.Dispatch<React.SetStateAction<{ [key: string]: string }>>;
@@ -23,6 +24,7 @@ interface VisualStoryboardGeneratorProps {
 
 export function VisualStoryboardGenerator({
   characters,
+  artStyle,
   scenes,
   generatedImages,
   setGeneratedImages,
@@ -64,6 +66,7 @@ export function VisualStoryboardGenerator({
       // Generate the image
       const imageUrl = await generateVisualStoryboard({
         characters: characterRefs,
+        artStyle,
         previousStoryboardUri: previousImage,
         promptText: scene.imagePrompt,
         aspectRatio,

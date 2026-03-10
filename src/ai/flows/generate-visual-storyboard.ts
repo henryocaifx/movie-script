@@ -17,6 +17,7 @@ const CharacterReferenceSchema = z.object({
 
 const VisualStoryboardInputSchema = z.object({
   characters: z.array(CharacterReferenceSchema).describe("List of character names and their reference images."),
+  artStyle: z.string().describe("The target visual aesthetic or medium."),
   previousStoryboardUri: z.string().optional().describe("A data URI of the previously generated storyboard for continuity."),
   promptText: z.string().describe("The detailed visual prompt for the current scene."),
   aspectRatio: z.string().default('16:9'),
@@ -46,7 +47,8 @@ Panel 1 (top left)
 Panel 2 (top right)
 Panel 3 (bottom left)
 Panel 4 (bottom right)
-Visual Style: Maintain consistent lighting, color grading, and character appearance across all four panels based on the provided character references. Ultra-realistic textures and cinematic film grain.
+Art Style: ${input.artStyle}
+Guidelines: Maintain consistent lighting, color grading, and character appearance across all four panels based on the provided character references.
 Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
 
     const promptParts: any[] = [

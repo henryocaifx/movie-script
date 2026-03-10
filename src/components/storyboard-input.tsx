@@ -17,6 +17,7 @@ const formSchema = z.object({
     description: z.string().min(10, 'Please provide more character details.'),
     image: z.string().optional(),
   })).min(1, 'Please add at least one character.'),
+  artStyle: z.string().min(5, 'Please specify an art style (e.g., 35mm film, hand-drawn anime).'),
   movieIdea: z.string().min(20, 'Please elaborate a bit more on your movie premise.'),
 });
 
@@ -32,6 +33,7 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       characters: [{ name: '', description: '', image: '' }],
+      artStyle: '',
       movieIdea: '',
     },
   });
@@ -62,9 +64,9 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
             <span className="text-primary font-bold tracking-tighter text-lg uppercase">Production Deck</span>
           </div>
           <CardTitle className="text-4xl font-headline font-bold">Initialize New Script</CardTitle>
-          <CardDescription className="text-lg">
+          {/* <CardDescription className="text-lg">
             Describe your cast and premise. Our AI Cinematographer will handle the pacing.
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -184,8 +186,30 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                     </div>
                   </div>
                 ))}
-                <FormDescription>Define names, upload reference portraits, and describe details for each character.</FormDescription>
+                {/* <FormDescription>Define names, upload reference portraits, and describe details for each character.</FormDescription> */}
               </div>
+
+              <FormField
+                control={form.control}
+                name="artStyle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-md font-semibold">
+                      <Sparkles className="h-4 w-4 text-accent" />
+                      Art Style and Medium
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="e.g., 35mm film, grainy, high-contrast black and white, hand-drawn anime..."
+                        className="bg-background/50 border-border/50 focus:border-primary"
+                        {...field}
+                      />
+                    </FormControl>
+                    {/* <FormDescription>Specify the visual aesthetic: film stock, animation style, or specific artistic medium.</FormDescription> */}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -203,7 +227,7 @@ export function StoryboardInput({ onSubmit, isLoading }: StoryboardInputProps) {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>Describe the basic plot arc or a specific high-stakes sequence.</FormDescription>
+                    {/* <FormDescription>Describe the basic plot arc or a specific high-stakes sequence.</FormDescription> */}
                     <FormMessage />
                   </FormItem>
                 )}

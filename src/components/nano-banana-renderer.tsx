@@ -5,7 +5,7 @@ import { Clapperboard, Monitor, Download, Maximize2, Loader2, X } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { saveStoryboardImageAction } from '@/app/actions/save-storyboard-image';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface NanoBananaRendererProps {
     scenes: StoryboardScene[];
@@ -194,6 +194,7 @@ export function NanoBananaRenderer({ scenes, generatedImages }: NanoBananaRender
 
             <Dialog open={!!zoomedImage} onOpenChange={(open) => !open && setZoomedImage(null)}>
                 <DialogContent className="max-w-7xl p-0 overflow-hidden border-none bg-black/95 backdrop-blur-3xl shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+                    <DialogTitle className="sr-only">Zoomed Storyboard Image</DialogTitle>
                     <div className="relative w-full h-full flex items-center justify-center p-4">
                         {zoomedImage && (
                             <img

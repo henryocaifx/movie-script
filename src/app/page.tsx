@@ -13,14 +13,20 @@ import { useToast } from '@/hooks/use-toast';
 export default function AIFXCast() {
   const [isLoading, setIsLoading] = useState(false);
   const [characters, setCharacters] = useState<{ name: string; description: string; image?: string }[]>([]);
+  const [artStyle, setArtStyle] = useState<string>('');
   const [scenes, setScenes] = useState<StoryboardScene[] | null>(null);
   const [generatedImages, setGeneratedImages] = useState<{ [key: string]: string }>({});
   const [sessionTimestamp, setSessionTimestamp] = useState<string>('');
   const { toast } = useToast();
 
-  const handleGenerate = async (values: { characters: { name: string; description: string; image?: string }[]; movieIdea: string }) => {
+  const handleGenerate = async (values: {
+    characters: { name: string; description: string; image?: string }[];
+    artStyle: string;
+    movieIdea: string;
+  }) => {
     setIsLoading(true);
     setCharacters(values.characters);
+    setArtStyle(values.artStyle);
     setGeneratedImages({}); // Clear previous images
     // Create a session timestamp for this storyboard run — all scene renders will share this folder
     const now = new Date();
@@ -38,6 +44,7 @@ export default function AIFXCast() {
 
       const rawOutput = await generateCinematicStoryboard({
         charactersDescription,
+        artStyle: values.artStyle,
         movieIdea: values.movieIdea,
       });
       const parsedScenes = parseStoryboard(rawOutput);
@@ -108,6 +115,7 @@ export default function AIFXCast() {
             <StoryboardEditor initialScenes={scenes} onComplete={handleReset} />
             <VisualStoryboardGenerator
               characters={characters}
+              artStyle={artStyle}
               scenes={scenes}
               generatedImages={generatedImages}
               setGeneratedImages={setGeneratedImages}

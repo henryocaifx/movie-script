@@ -13,6 +13,7 @@ import { z } from 'genkit';
 
 const GenerateCinematicStoryboardInputSchema = z.object({
   charactersDescription: z.string().describe('A description of the characters involved in the movie, including their number, names, and key traits.'),
+  artStyle: z.string().describe('The visual aesthetic, film stock, or artistic medium for the storyboard.'),
   movieIdea: z.string().describe('The basic plot idea or premise for the movie.'),
 });
 export type GenerateCinematicStoryboardInput = z.infer<typeof GenerateCinematicStoryboardInputSchema>;
@@ -31,19 +32,20 @@ const cinematicStoryboardPrompt = ai.definePrompt({
   model: 'googleai/gemini-3-flash-preview',
   prompt: `You are a Professional Cinematographer and Prompt Engineer. Your goal is to expand a basic idea into a logically paced multi-scene storyboard.
 
-Here is the movie idea and character information:
+Here is the movie idea, character information, and target visual aesthetic:
 Characters: {{{charactersDescription}}}
+Art Style / Medium: {{{artStyle}}}
 Movie Idea: {{{movieIdea}}}
 
 Task:
-1. Analyze the provided character details and basic movie idea.
+1. Analyze the provided character details and basic movie idea, keeping the "{{{artStyle}}}" aesthetic in mind.
 2. Determine the necessary number of scenes to tell a full story arc, ensuring logical pacing. You MUST generate between 2 and 4 scenes (min=2, max=4).
 3. CRITICAL: Scene numbering MUST ALWAYS start at 1 for this new storyboard. The first scene is SCENE_START: 1, the second is SCENE_START: 2, and so on. Never carry over scene numbers from a previous context.
-4. For each scene, create a 4-grid storyboard layout.
+4. For each scene, create a 4-grid storyboard layout that adheres to the technical and stylistic requirements of "{{{artStyle}}}".
 5. Crucially, ensure strict character consistency across all scenes and panels. Character clothing, age, and features must remain identical throughout the storyboard. Describe this consistency clearly in your panel descriptions and especially in the IMAGE_PROMPT.
 6. Use technical camera terms (e.g., "wide shot," "close-up," "dolly zoom," "rim lighting," "anamorphic lens," "tracking shot," "dutch angle," "macro focus") in your descriptions to convey specific visual intentions.
 7. Focus heavily on visual action, character expressions, and environmental details rather than dialogue. Assume any dialogue will be added later.
-8. The "IMAGE_PROMPT" for each scene must be a single, highly detailed paragraph, optimized for high-end AI image generators. It should combine visual elements from all four panels of that scene, explicitly mentioning camera angles, lighting, character consistency, and atmospheric details to create a cohesive 4-grid image. Ensure it is explicitly for an 8k cinematic output.
+8. The "IMAGE_PROMPT" for each scene must be a single, highly detailed paragraph, optimized for high-end AI image generators. It should combine visual elements from all four panels of that scene, explicitly mentioning the "{{{artStyle}}}" aesthetic, camera angles, lighting, character consistency, and atmospheric details to create a cohesive 4-grid image. Ensure it is explicitly for an 8k cinematic output.
 
 Strictly adhere to the following output format for every scene. Do not include any additional text, introductory/concluding remarks, or explanations outside of this exact format. Output one "---" marker after each SCENE_END block:
 
