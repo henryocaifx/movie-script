@@ -19,6 +19,7 @@ const VisualStoryboardInputSchema = z.object({
   characters: z.array(CharacterReferenceSchema).describe("List of character names and their reference images."),
   artStyle: z.string().describe("The target visual aesthetic or medium."),
   previousStoryboardUri: z.string().optional().describe("A data URI of the previously generated storyboard for continuity."),
+  sceneNumber: z.number().describe("The current scene number."),
   promptText: z.string().describe("The detailed visual prompt for the current scene."),
   aspectRatio: z.string().default('16:9'),
   resolution: z.string().default('2k'),
@@ -63,8 +64,8 @@ Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
       });
     }
 
-    if (input.previousStoryboardUri) {
-      promptParts.push({ text: "Reference this previous storyboard output to maintain visual and stylistic continuity for the next sequence:" });
+    if (input.sceneNumber > 1 && input.previousStoryboardUri) {
+      promptParts.push({ text: `Reference this previous storyboard output (storyboard-${input.sceneNumber - 1}.png) to maintain visual and stylistic continuity for the next sequence:` });
       promptParts.push({ media: { url: input.previousStoryboardUri } });
     }
 

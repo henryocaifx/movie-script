@@ -75,3 +75,29 @@ export async function saveStoryboardImageAction(index: number, dataUri: string, 
     return { success: false, message: error.message || 'Failed to save image to disk.' };
   }
 }
+
+/**
+ * Reads a generated storyboard image from disk and returns it as a data URI.
+ */
+export async function getGeneratedStoryboardAction(
+  sceneNumber: number,
+  sessionTimestamp: string
+) {
+  try {
+    const dir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
+    const filename = `storyboard-${sceneNumber}.png`;
+    const filePath = path.join(dir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return { success: false, message: `Image not found: ${filePath}` };
+    }
+
+    const imageBuffer = fs.readFileSync(filePath);
+    const dataUri = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+
+    return { success: true, dataUri, filename };
+  } catch (error: any) {
+    console.error('Failed to read generated storyboard image:', error);
+    return { success: false, message: error.message || 'Failed to read image from disk.' };
+  }
+}

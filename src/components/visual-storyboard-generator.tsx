@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { ImageIcon, Wand2, Download, CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react';
 import { generateVisualStoryboard } from '@/ai/flows/generate-visual-storyboard';
-import { saveGeneratedStoryboardAction } from '@/app/actions/save-storyboard-image';
+import { saveGeneratedStoryboardAction, getGeneratedStoryboardAction } from '@/app/actions/save-storyboard-image';
 import { saveScenesAction, getSceneAction } from '@/app/actions/save-scenes';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -117,8 +117,23 @@ export function VisualStoryboardGenerator({
 
       // 2. Find previous scene image for continuity
       let previousImage: string | undefined = undefined;
-      if (index > 0) {
-        previousImage = generatedImages[localScenes[index - 1].id];
+      const currentSceneNumber = parseInt(sceneNumber);
+
+      if (currentSceneNumber > 1) {
+        // "only reference from the png file with the correct number"
+        const prevResult = await getGeneratedStoryboardAction(
+          currentSceneNumber - 1,
+          sessionTimestamp
+        );
+
+        if (prevResult.success && prevResult.dataUri) {
+          previousImage = prevResult.dataUri;
+          console.log(`Maintaining continuity with storyboard-${currentSceneNumber - 1}.png`);
+        } else {
+          console.warn(`Could not find previous storyboard image for Scene ${currentSceneNumber}:`, prevResult.message);
+          // Fallback to memory if disk read fails
+          previousImage = generatedImages[localScenes[index - 1]?.id];
+        }
       }
 
       // 3. Format characters for the AI
@@ -132,6 +147,7 @@ export function VisualStoryboardGenerator({
         characters: characterRefs,
         artStyle,
         previousStoryboardUri: previousImage,
+        sceneNumber: currentSceneNumber,
         promptText: markdownContent,
         aspectRatio,
         resolution,
