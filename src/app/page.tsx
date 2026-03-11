@@ -92,7 +92,7 @@ export default function AIFXCast() {
         <div className="flex-1" />
         <div className="flex items-center">
           <img
-            src="/aifx-cast-header.png"
+            src="/aifx-cine-header.png"
             alt="AIFX Cast"
             className="h-10 w-auto object-contain"
           />
@@ -133,6 +133,8 @@ export default function AIFXCast() {
             <NanoBananaRenderer
               scenes={scenes}
               generatedImages={generatedImages}
+              setGeneratedImages={setGeneratedImages}
+              sessionTimestamp={sessionTimestamp}
             />
           </div>
         )}

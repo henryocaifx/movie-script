@@ -1,6 +1,6 @@
 # AIFX Cast
 
-![AIFX Cast Header](/public/aifx-cast-header.png)
+![AIFX Cast Header](/public/aifx-cine-header.png)
 
 A professional, high-fidelity cinematic storyboard synthesis suite powered by **Google Gemini 3 Flash** and the **Nano Banana 2** image engine. **AIFX Cast** transforms raw movie premises into technically precise, visually consistent, and logically paced storyboards.
 
