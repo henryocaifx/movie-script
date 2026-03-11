@@ -168,32 +168,84 @@ export async function getSlicedGridAction(
 }
 
 /**
- * Saves a revised single-panel image to:
- *   storyboard/sliced/yyyymmdd-hhmm/storyboard-{sceneNumber}-grid-{gridNumber}-revised.png
+ * Processes a revised panel: resizes it to match original, replaces original grid,
+ * and re-composites the entire master storyboard.
  */
 export async function saveRevisedPanelImageAction(
   sceneNumber: number,
   gridNumber: number,
-  dataUri: string,
+  revisedDataUri: string,
   sessionTimestamp: string
 ) {
   try {
-    const dir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const slicedDir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
+    const generatedDir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
+
+    const originalGridPath = path.join(slicedDir, `storyboard-${sceneNumber}-grid-${gridNumber}.png`);
+    
+    if (!fs.existsSync(originalGridPath)) {
+      throw new Error(`Original grid not found: ${originalGridPath}`);
     }
 
-    const base64Data = dataUri.split(',')[1];
-    if (!base64Data) throw new Error('Invalid image data format');
+    // 1. Get original dimensions
+    const originalMetadata = await sharp(originalGridPath).metadata();
+    if (!originalMetadata.width || !originalMetadata.height) {
+      throw new Error('Could not read original grid dimensions');
+    }
 
-    const filename = `storyboard-${sceneNumber}-grid-${gridNumber}-revised.png`;
-    const filePath = path.join(dir, filename);
+    // 2. Process revised image: Resize to match original exactly
+    const revisedBuffer = Buffer.from(revisedDataUri.split(',')[1], 'base64');
+    const processedRevisedBuffer = await sharp(revisedBuffer)
+      .resize(originalMetadata.width, originalMetadata.height, { fit: 'fill' }) // "Do not crop, only resize"
+      .toBuffer();
 
-    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    // 3. Replace original grid image
+    fs.writeFileSync(originalGridPath, processedRevisedBuffer);
 
-    return { success: true, message: `Saved revised panel to ${filename}`, filename };
+    // 4. Combine all four grid photos as the new storyboard image
+    const grids = [1, 2, 3, 4].map(g => path.join(slicedDir, `storyboard-${sceneNumber}-grid-${g}.png`));
+    
+    for (const gPath of grids) {
+      if (!fs.existsSync(gPath)) {
+        throw new Error(`Missing grid component for re-compositing: ${gPath}`);
+      }
+    }
+
+    // Master image should be 2x original grid width and 2x original grid height
+    const masterWidth = originalMetadata.width * 2;
+    const masterHeight = originalMetadata.height * 2;
+
+    const compositeImage = await sharp({
+      create: {
+        width: masterWidth,
+        height: masterHeight,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 1 }
+      }
+    })
+    .composite([
+      { input: grids[0], left: 0, top: 0 },
+      { input: grids[1], left: originalMetadata.width, top: 0 },
+      { input: grids[2], left: 0, top: originalMetadata.height },
+      { input: grids[3], left: originalMetadata.width, top: originalMetadata.height },
+    ])
+    .png()
+    .toBuffer();
+
+    // 5. Save the new 4-grid image to storyboard/generated/
+    const masterFilename = `storyboard-${sceneNumber}.png`;
+    const masterPath = path.join(generatedDir, masterFilename);
+    fs.writeFileSync(masterPath, compositeImage);
+
+    const masterDataUri = `data:image/png;base64,${compositeImage.toString('base64')}`;
+
+    return { 
+      success: true, 
+      message: `Updated Panel ${gridNumber} and re-composited Storyboard ${sceneNumber}.`,
+      masterDataUri 
+    };
   } catch (error: any) {
-    console.error('Failed to save revised panel image:', error);
-    return { success: false, message: error.message || 'Failed to save revised image to disk.' };
+    console.error('Failed to process revised panel and recomposite:', error);
+    return { success: false, message: error.message || 'Failed to update composite image.' };
   }
 }

@@ -129,13 +129,21 @@ export function VisualStoryboardGenerator({
         resolution: resolution, // Keeping same as master config for quality
       });
 
-      // 5. Save the revised image to disk
-      await saveRevisedPanelImageAction(
+      // 5. Save the revised image to disk and recomposite the master storyboard
+      const compositeResult = await saveRevisedPanelImageAction(
         parseInt(scene.sceneNumber),
         panelIdx + 1,
         revisedImageUrl,
         sessionTimestamp
       );
+
+      if (compositeResult.success && compositeResult.masterDataUri) {
+        // Update the UI with the new re-composited master image
+        setGeneratedImages(prev => ({ 
+          ...prev, 
+          [scene.id]: compositeResult.masterDataUri as string 
+        }));
+      }
 
       toast({
         title: "Panel Revised & Rendered",
