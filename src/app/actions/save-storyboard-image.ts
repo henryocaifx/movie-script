@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 
 function getTimestamp() {
   const now = new Date();
@@ -23,18 +24,55 @@ export async function saveGeneratedStoryboardAction(
 ) {
   try {
     const dir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
+    const slicedDir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
 
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(slicedDir)) fs.mkdirSync(slicedDir, { recursive: true });
 
     const base64Data = dataUri.split(',')[1];
     if (!base64Data) throw new Error('Invalid image data format');
+    const imageBuffer = Buffer.from(base64Data, 'base64');
 
+    // 1. Save the main 4-panel image
     const filename = `storyboard-${sceneNumber}.png`;
-    fs.writeFileSync(path.join(dir, filename), Buffer.from(base64Data, 'base64'));
+    fs.writeFileSync(path.join(dir, filename), imageBuffer);
 
-    return { success: true, message: `Saved ${filename} to storyboard/generated/${sessionTimestamp}`, filename };
+    // 2. Slice the image into 4 grids (2x2)
+    const image = sharp(imageBuffer);
+    const metadata = await image.metadata();
+    
+    if (!metadata.width || !metadata.height) {
+      throw new Error('Could not determine image dimensions for slicing');
+    }
+
+    const halfWidth = Math.floor(metadata.width / 2);
+    const halfHeight = Math.floor(metadata.height / 2);
+
+    const regions = [
+      { name: 'grid-1', left: 0, top: 0 },
+      { name: 'grid-2', left: halfWidth, top: 0 },
+      { name: 'grid-3', left: 0, top: halfHeight },
+      { name: 'grid-4', left: halfWidth, top: halfHeight },
+    ];
+
+    for (const region of regions) {
+      const sliceFilename = `storyboard-${sceneNumber}-${region.name}.png`;
+      await image
+        .clone()
+        .extract({
+          left: region.left,
+          top: region.top,
+          width: halfWidth,
+          height: halfHeight
+        })
+        .toFile(path.join(slicedDir, sliceFilename));
+    }
+
+    return { 
+      success: true, 
+      message: `Saved ${filename} and sliced grids to storyboard/${sessionTimestamp}`, 
+      filename 
+    };
   } catch (error: any) {
     console.error('Failed to save generated storyboard image:', error);
     return { success: false, message: error.message || 'Failed to save image to disk.' };
