@@ -49,8 +49,7 @@ Panel 2 (top right)
 Panel 3 (bottom left)
 Panel 4 (bottom right)
 Art Style: ${input.artStyle}
-Guidelines: Maintain consistent lighting, color grading, and character appearance across all four panels based on the provided character references.
-Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
+Guidelines: Maintain consistent lighting, color grading, and character appearance across all four panels based on the provided character references.`;
 
     const promptParts: any[] = [
       { text: systemInstruction },
@@ -76,7 +75,12 @@ Resolution: ${input.resolution}. Aspect Ratio: ${input.aspectRatio}.`;
       prompt: promptParts,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
-      },
+        // @ts-ignore - Google AI image generation parameters
+        imageConfig: {
+          aspectRatio: input.aspectRatio,
+          imageSize: input.resolution,
+        }
+      } as any,
     });
 
     if (!media || !media.url) {

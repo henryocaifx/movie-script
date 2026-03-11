@@ -249,9 +249,10 @@ export function VisualStoryboardGenerator({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="16:9">16:9 Cinema</SelectItem>
-                    <SelectItem value="2.35:1">2.35:1 Panavision</SelectItem>
+                    <SelectItem value="21:9">21:9 Panavision</SelectItem>
                     <SelectItem value="4:3">4:3 Academy</SelectItem>
                     <SelectItem value="1:1">1:1 Square</SelectItem>
+                    <SelectItem value="9:16">9:16 Vertical</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -262,9 +263,9 @@ export function VisualStoryboardGenerator({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2k">2K Studio</SelectItem>
-                    <SelectItem value="4k">4K Ultra HD</SelectItem>
-                    <SelectItem value="8k">8K Cinema</SelectItem>
+                    <SelectItem value="1K">1K Studio</SelectItem>
+                    <SelectItem value="2K">2K Ultra HD</SelectItem>
+                    <SelectItem value="4K">4K Cinema</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
