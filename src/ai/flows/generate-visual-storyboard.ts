@@ -25,6 +25,14 @@ const VisualStoryboardInputSchema = z.object({
   resolution: z.string().default('2k'),
 });
 
+const RevisedPanelInputSchema = z.object({
+  characters: z.array(CharacterReferenceSchema).describe("List of character names and their reference images."),
+  panelContent: z.string().describe("The updated description for this specific panel."),
+  previousGridUri: z.string().describe("The previous version of this grid image for styling/continuity."),
+  aspectRatio: z.string().default('16:9'),
+  resolution: z.string().default('2k'),
+});
+
 export type VisualStoryboardInput = z.infer<typeof VisualStoryboardInputSchema>;
 
 export async function generateVisualStoryboard(input: VisualStoryboardInput): Promise<string> {
@@ -85,6 +93,60 @@ Guidelines: Maintain consistent lighting, color grading, and character appearanc
 
     if (!media || !media.url) {
       throw new Error('Failed to generate visual storyboard image.');
+    }
+
+    return media.url;
+  }
+);
+export async function generateRevisedPanel(input: z.infer<typeof RevisedPanelInputSchema>): Promise<string> {
+  return generateRevisedPanelFlow(input);
+}
+
+const generateRevisedPanelFlow = ai.defineFlow(
+  {
+    name: 'generateRevisedPanelFlow',
+    inputSchema: RevisedPanelInputSchema,
+    outputSchema: z.string(),
+  },
+  async (input) => {
+    const systemInstruction = `A professional single-panel cinematic storyboard frame. Cinematic realism, shot on ARRI Alexa, 35mm lens, high dynamic range.
+Technical Constraints:
+Strictly no text, labels, numbers, or annotations.
+Art Style: Maintain stylistic continuity with the provided reference grid image.
+Guidelines: Maintain consistent lighting, color grading, and character appearance based on the provided character references and the reference grid.`;
+
+    const promptParts: any[] = [
+      { text: systemInstruction },
+    ];
+
+    if (input.characters.length > 0) {
+      promptParts.push({ text: "The following images are reference portraits for the characters. Please ensure their appearances match these references exactly:" });
+      input.characters.forEach(char => {
+        promptParts.push({ text: `Character Name: ${char.name}` });
+        promptParts.push({ media: { url: char.imageUri } });
+      });
+    }
+
+    promptParts.push({ text: "Reference the following image for visual and stylistic continuity (lighting, framing, and mood):" });
+    promptParts.push({ media: { url: input.previousGridUri } });
+
+    promptParts.push({ text: `Generate a revised version of this panel based on the following description:\n\n${input.panelContent}` });
+
+    const { media } = await ai.generate({
+      model: 'googleai/gemini-3.1-flash-image-preview',
+      prompt: promptParts,
+      config: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        // @ts-ignore - Google AI image generation parameters
+        imageConfig: {
+          aspectRatio: input.aspectRatio,
+          imageSize: input.resolution,
+        }
+      } as any,
+    });
+
+    if (!media || !media.url) {
+      throw new Error('Failed to generate revised panel image.');
     }
 
     return media.url;

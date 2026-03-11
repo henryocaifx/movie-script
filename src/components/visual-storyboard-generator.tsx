@@ -10,8 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { ImageIcon, Wand2, Download, CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react';
-import { generateVisualStoryboard } from '@/ai/flows/generate-visual-storyboard';
-import { saveGeneratedStoryboardAction, getGeneratedStoryboardAction } from '@/app/actions/save-storyboard-image';
+import { generateVisualStoryboard, generateRevisedPanel } from '@/ai/flows/generate-visual-storyboard';
+import { saveGeneratedStoryboardAction, getGeneratedStoryboardAction, getSlicedGridAction, saveRevisedPanelImageAction } from '@/app/actions/save-storyboard-image';
 import { saveScenesAction, getSceneAction, savePanelAction } from '@/app/actions/save-scenes';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
@@ -93,25 +93,58 @@ export function VisualStoryboardGenerator({
     setRevisingPanels(prev => ({ ...prev, [key]: true }));
 
     try {
-      const result = await savePanelAction(
+      // 1. Save MD content
+      const saveResult = await savePanelAction(
         scene.sceneNumber,
         panelIdx,
         panelContent,
         sessionTimestamp
       );
 
-      if (result.success) {
-        toast({
-          title: "Panel Revised",
-          description: `Panel ${panelIdx + 1} of Scene ${scene.sceneNumber} updated.`,
-        });
-      } else {
-        throw new Error(result.message);
+      if (!saveResult.success) throw new Error(saveResult.message);
+
+      // 2. Fetch previous grid image for continuity
+      const prevGridResult = await getSlicedGridAction(
+        parseInt(scene.sceneNumber),
+        panelIdx + 1,
+        sessionTimestamp
+      );
+
+      if (!prevGridResult.success || !prevGridResult.dataUri) {
+        throw new Error(`Could not find previous grid image: ${prevGridResult.message}`);
       }
+
+      // 3. Format characters
+      const characterRefs = characters.map(c => ({
+        name: c.name,
+        imageUri: c.image || ''
+      }));
+
+      // 4. Generate Revised Image via AI
+      const revisedImageUrl = await generateRevisedPanel({
+        characters: characterRefs,
+        panelContent: panelContent,
+        previousGridUri: prevGridResult.dataUri,
+        aspectRatio: aspectRatio,
+        resolution: resolution, // Keeping same as master config for quality
+      });
+
+      // 5. Save the revised image to disk
+      await saveRevisedPanelImageAction(
+        parseInt(scene.sceneNumber),
+        panelIdx + 1,
+        revisedImageUrl,
+        sessionTimestamp
+      );
+
+      toast({
+        title: "Panel Revised & Rendered",
+        description: `Panel ${panelIdx + 1} of Scene ${scene.sceneNumber} updated with new render.`,
+      });
     } catch (error: any) {
       toast({
         title: "Revision Error",
-        description: error.message || "Failed to revise panel.",
+        description: error.message || "Failed to revise panel or generate image.",
         variant: "destructive"
       });
     } finally {

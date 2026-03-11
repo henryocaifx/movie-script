@@ -139,3 +139,61 @@ export async function getGeneratedStoryboardAction(
     return { success: false, message: error.message || 'Failed to read image from disk.' };
   }
 }
+
+/**
+ * Reads a sliced grid image from disk and returns it as a data URI.
+ */
+export async function getSlicedGridAction(
+  sceneNumber: number,
+  gridNumber: number,
+  sessionTimestamp: string
+) {
+  try {
+    const dir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
+    const filename = `storyboard-${sceneNumber}-grid-${gridNumber}.png`;
+    const filePath = path.join(dir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return { success: false, message: `Sliced image not found: ${filePath}` };
+    }
+
+    const imageBuffer = fs.readFileSync(filePath);
+    const dataUri = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+
+    return { success: true, dataUri, filename };
+  } catch (error: any) {
+    console.error('Failed to read sliced grid image:', error);
+    return { success: false, message: error.message || 'Failed to read sliced image from disk.' };
+  }
+}
+
+/**
+ * Saves a revised single-panel image to:
+ *   storyboard/sliced/yyyymmdd-hhmm/storyboard-{sceneNumber}-grid-{gridNumber}-revised.png
+ */
+export async function saveRevisedPanelImageAction(
+  sceneNumber: number,
+  gridNumber: number,
+  dataUri: string,
+  sessionTimestamp: string
+) {
+  try {
+    const dir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const base64Data = dataUri.split(',')[1];
+    if (!base64Data) throw new Error('Invalid image data format');
+
+    const filename = `storyboard-${sceneNumber}-grid-${gridNumber}-revised.png`;
+    const filePath = path.join(dir, filename);
+
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+
+    return { success: true, message: `Saved revised panel to ${filename}`, filename };
+  } catch (error: any) {
+    console.error('Failed to save revised panel image:', error);
+    return { success: false, message: error.message || 'Failed to save revised image to disk.' };
+  }
+}
