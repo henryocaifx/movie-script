@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { ImageIcon, Wand2, Download, CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react';
 import { generateVisualStoryboard } from '@/ai/flows/generate-visual-storyboard';
 import { saveGeneratedStoryboardAction, getGeneratedStoryboardAction } from '@/app/actions/save-storyboard-image';
-import { saveScenesAction, getSceneAction } from '@/app/actions/save-scenes';
+import { saveScenesAction, getSceneAction, savePanelAction } from '@/app/actions/save-scenes';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
@@ -40,6 +40,7 @@ export function VisualStoryboardGenerator({
   const [resolution, setResolution] = useState('2k');
   const [generatingScenes, setGeneratingScenes] = useState<{ [key: string]: boolean }>({});
   const [savingScenes, setSavingScenes] = useState<{ [key: string]: boolean }>({});
+  const [revisingPanels, setRevisingPanels] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
 
   const handlePanelChange = (sceneIdx: number, panelIdx: number, value: string) => {
@@ -81,6 +82,40 @@ export function VisualStoryboardGenerator({
       });
     } finally {
       setSavingScenes(prev => ({ ...prev, [scene.id]: false }));
+    }
+  };
+
+  const revisePanel = async (sceneIdx: number, panelIdx: number) => {
+    const scene = localScenes[sceneIdx];
+    const panelContent = scene.panels[panelIdx];
+    const key = `${scene.id}-p${panelIdx}`;
+    
+    setRevisingPanels(prev => ({ ...prev, [key]: true }));
+
+    try {
+      const result = await savePanelAction(
+        scene.sceneNumber,
+        panelIdx,
+        panelContent,
+        sessionTimestamp
+      );
+
+      if (result.success) {
+        toast({
+          title: "Panel Revised",
+          description: `Panel ${panelIdx + 1} of Scene ${scene.sceneNumber} updated.`,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Revision Error",
+        description: error.message || "Failed to revise panel.",
+        variant: "destructive"
+      });
+    } finally {
+      setRevisingPanels(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -374,9 +409,25 @@ export function VisualStoryboardGenerator({
                       <div className="grid grid-cols-2 gap-4">
                         {scene.panels.map((panel, panelIdx) => (
                           <div key={panelIdx} className="space-y-1">
-                            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                              Panel {panelIdx + 1}
-                            </Label>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                                Panel {panelIdx + 1}
+                              </Label>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-4 px-2 text-[8px] uppercase tracking-widest text-accent hover:text-accent/80 hover:bg-accent/5"
+                                onClick={() => revisePanel(idx, panelIdx)}
+                                disabled={revisingPanels[`${scene.id}-p${panelIdx}`]}
+                              >
+                                {revisingPanels[`${scene.id}-p${panelIdx}`] ? (
+                                  <Loader2 className="h-2 w-2 animate-spin mr-1" />
+                                ) : (
+                                  <Wand2 className="h-2 w-2 mr-1" />
+                                )}
+                                Revise
+                              </Button>
+                            </div>
                             <Textarea
                               value={panel}
                               onChange={(e) => handlePanelChange(idx, panelIdx, e.target.value)}
