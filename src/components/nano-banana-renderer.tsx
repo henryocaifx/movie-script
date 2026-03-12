@@ -112,7 +112,7 @@ export function NanoBananaRenderer({ scenes, generatedImages, setGeneratedImages
                         <div className="h-1 w-1 rounded-full bg-white/20" />
                         <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Studio Rendering v2.1</span>
                     </div>
-                    <h2 className="text-4xl font-headline font-bold">AIFX Cast <span className="text-primary italic">Cinema Review</span></h2>
+                    <h2 className="text-4xl font-headline font-bold">AIFX Cine <span className="text-primary italic">Cinema Review</span></h2>
                     <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
                         Technical review and sequence mastery. Your 4-panel grids are compiled here for
                         professional continuity checks and final export approval.
@@ -178,16 +178,16 @@ export function NanoBananaRenderer({ scenes, generatedImages, setGeneratedImages
                                             {imageUrl && (
                                                 <div className={cn(
                                                     "absolute inset-0 grid grid-cols-2 grid-rows-2 transition-opacity duration-300",
-                                                    [0, 1, 2, 3].some(g => enhancingPanels[getPanelId(idx, g)]) 
-                                                        ? "opacity-100" 
+                                                    [0, 1, 2, 3].some(g => enhancingPanels[getPanelId(idx, g)])
+                                                        ? "opacity-100"
                                                         : "opacity-0 group-hover:opacity-100"
                                                 )}>
                                                     {[0, 1, 2, 3].map((gIdx) => {
                                                         const panelId = getPanelId(idx, gIdx);
                                                         const isEnhancing = enhancingPanels[panelId];
                                                         return (
-                                                            <div 
-                                                                key={gIdx} 
+                                                            <div
+                                                                key={gIdx}
                                                                 className={cn(
                                                                     "relative flex items-center justify-center border border-white/10 transition-colors group/panel overflow-hidden",
                                                                     isEnhancing ? "bg-black/40" : "hover:bg-white/5"
@@ -198,8 +198,8 @@ export function NanoBananaRenderer({ scenes, generatedImages, setGeneratedImages
                                                                     variant="secondary"
                                                                     className={cn(
                                                                         "bg-black/60 backdrop-blur-md border-white/20 text-[8px] uppercase font-bold tracking-widest h-8 transition-all",
-                                                                        isEnhancing 
-                                                                            ? "opacity-100 translate-y-0" 
+                                                                        isEnhancing
+                                                                            ? "opacity-100 translate-y-0"
                                                                             : "opacity-0 group-hover/panel:opacity-100 translate-y-2 group-hover/panel:translate-y-0 hover:bg-primary hover:text-white"
                                                                     )}
                                                                     onClick={() => handleEnhanceCharacter(idx, gIdx)}

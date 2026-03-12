@@ -150,7 +150,7 @@ export default function AIFXCast() {
           />
         </div>
         <div className="container mx-auto px-4 mt-12 pt-8 border-t border-white/5 text-center text-xs text-muted-foreground/40">
-          © {new Date().getFullYear()} AIFX Cast. All Rights Reserved.
+          © {new Date().getFullYear()} AIFX Cine. All Rights Reserved.
         </div>
       </footer>
     </div>

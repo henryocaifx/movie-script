@@ -70,4 +70,4 @@ Navigate to `http://localhost:3000` to enter the production suite.
 
 ---
 
-© 2026 **AIFX Cast**. All Rights Reserved. Professional cinematography tools for the next generation of storytelling.
+© 2026 **AIFX Cine**. All Rights Reserved. Professional cinematography tools for the next generation of storytelling.
