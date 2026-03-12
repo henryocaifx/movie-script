@@ -17,6 +17,7 @@ The engine utilizes a sophisticated context-injection system. Every new scene ge
 
 ## 🚀 Advanced Features
 
+- **Character Enhancement**: Integrated with local ComfyUI to perform high-fidelity character detailing and upscaling on individual storyboard panels.
 - **Interactive Storyboard Editor**: Fine-tune AI-generated panels, adjust cinematography notes, and refine master image prompts before rendering.
 - **Scene-by-Scene Generation**: Precise control over the visual production line. Generate, review, and re-generate individual scenes until they match your vision.
 - **Cinematic Review Stage**: A high-end gallery interface for reviewing 8K-ready 4-grid storyboards with technical optics and pacing data.
@@ -30,28 +31,34 @@ The engine utilizes a sophisticated context-injection system. Every new scene ge
 | **Framework** | Next.js 15 (App Router) |
 | **AI Workflows** | Firebase Genkit |
 | **LLM** | Google Gemini 3 Flash Preview |
+| **Image Engine** | Nano Banana 2 (Gemini-based) |
+| **Enhancement** | ComfyUI (Local API) |
 | **Styling** | Tailwind CSS (Cinematic Dark Mode) |
-| **Components** | Radix UI + Lucide React |
-| **Language** | TypeScript |
 
 ## 🏗️ Getting Started
 
 ### 1. Environment Configuration
-Create a `.env` file in the root directory:
-```env
-GEMINI_API_KEY=your_gemini_api_key
+Copy the sample environment file and add your Google Gemini API key:
+```bash
+cp .env.sample .env
 ```
+Edit `.env` and set your `GEMINI_API_KEY`.
 
-### 2. Installation
+### 2. ComfyUI Setup (Optional for Enhancements)
+To use the **Enhance Character** feature, ensure you have a local ComfyUI instance running:
+- **URL**: `http://localhost:8189`
+- **Workflow**: Ensure the `z-i2i.json` workflow is present in your `public/` folder.
+
+### 3. Installation
 ```bash
 npm install
 ```
 
-### 3. Launch the Studio
+### 4. Launch the Studio
 ```bash
 npm run dev
 ```
-Navigate to `http://localhost:3000` to enter the production suite.
+Navigate to `http://localhost:9002` (as configured in `package.json`) to enter the production suite.
 
 ## 🎬 Production Workflow
 
