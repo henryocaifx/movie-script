@@ -1,8 +1,7 @@
 'use server';
 
-import fs from 'fs';
-import path from 'path';
 import sharp from 'sharp';
+import { uploadToS3, getFromS3, existsInS3 } from '@/lib/s3';
 
 function getTimestamp() {
   const now = new Date();
@@ -14,7 +13,7 @@ function getTimestamp() {
 }
 
 /**
- * Saves an individually generated storyboard image to:
+ * Saves an individually generated storyboard image to SeaweedFS:
  *   storyboard/generated/yyyymmdd-hhmm/storyboard-{sceneNumber}.png
  */
 export async function saveGeneratedStoryboardAction(
@@ -23,21 +22,16 @@ export async function saveGeneratedStoryboardAction(
   sessionTimestamp: string
 ) {
   try {
-    const dir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
-    const slicedDir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
-
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    if (!fs.existsSync(slicedDir)) fs.mkdirSync(slicedDir, { recursive: true });
-
     const base64Data = dataUri.split(',')[1];
     if (!base64Data) throw new Error('Invalid image data format');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    // 1. Save the main 4-panel image
+    // 1. Save the main 4-panel image to S3
     const filename = `storyboard-${sceneNumber}.png`;
-    fs.writeFileSync(path.join(dir, filename), imageBuffer);
+    const mainKey = `storyboard/generated/${sessionTimestamp}/${filename}`;
+    await uploadToS3(mainKey, imageBuffer);
 
-    // 2. Slice the image into 4 grids (2x2)
+    // 2. Slice the image into 4 grids (2x2) and save to S3
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
     
@@ -57,7 +51,9 @@ export async function saveGeneratedStoryboardAction(
 
     for (const region of regions) {
       const sliceFilename = `storyboard-${sceneNumber}-${region.name}.png`;
-      await image
+      const sliceKey = `storyboard/sliced/${sessionTimestamp}/${sliceFilename}`;
+      
+      const sliceBuffer = await image
         .clone()
         .extract({
           left: region.left,
@@ -65,83 +61,80 @@ export async function saveGeneratedStoryboardAction(
           width: halfWidth,
           height: halfHeight
         })
-        .toFile(path.join(slicedDir, sliceFilename));
+        .toBuffer();
+      
+      await uploadToS3(sliceKey, sliceBuffer);
     }
 
     return { 
       success: true, 
-      message: `Saved ${filename} and sliced grids to storyboard/${sessionTimestamp}`, 
+      message: `Saved ${filename} and sliced grids to SeaweedFS (storyboard/${sessionTimestamp})`, 
       filename 
     };
   } catch (error: any) {
-    console.error('Failed to save generated storyboard image:', error);
-    return { success: false, message: error.message || 'Failed to save image to disk.' };
+    console.error('Failed to save generated storyboard image to S3:', error);
+    return { success: false, message: error.message || 'Failed to save image to object storage.' };
   }
 }
 
 /**
- * Saves an archived exported storyboard image to:
+ * Saves an archived exported storyboard image to SeaweedFS:
  *   storyboard/{subDir}/storyboard-{index+1}.png
  */
 export async function saveStoryboardImageAction(index: number, dataUri: string, subDir?: string) {
   try {
-    let storyboardDir = path.join(process.cwd(), 'storyboard');
+    let baseKey = 'storyboard';
     if (subDir) {
-      storyboardDir = path.join(storyboardDir, subDir);
-    }
-
-    if (!fs.existsSync(storyboardDir)) {
-      fs.mkdirSync(storyboardDir, { recursive: true });
+      baseKey = `${baseKey}/${subDir}`;
     }
 
     const base64Data = dataUri.split(',')[1];
     if (!base64Data) throw new Error('Invalid image data format');
 
     const filename = `storyboard-${index + 1}.png`;
-    const filePath = path.join(storyboardDir, filename);
+    const key = `${baseKey}/${filename}`;
 
-    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    await uploadToS3(key, Buffer.from(base64Data, 'base64'));
 
     return {
       success: true,
-      message: `Successfully saved ${filename} to ${storyboardDir}.`,
+      message: `Successfully saved ${filename} to SeaweedFS path: ${baseKey}.`,
       filename,
-      path: storyboardDir
+      path: baseKey
     };
   } catch (error: any) {
-    console.error('Failed to save storyboard image:', error);
-    return { success: false, message: error.message || 'Failed to save image to disk.' };
+    console.error('Failed to save storyboard image to S3:', error);
+    return { success: false, message: error.message || 'Failed to save image to object storage.' };
   }
 }
 
 /**
- * Reads a generated storyboard image from disk and returns it as a data URI.
+ * Reads a generated storyboard image from SeaweedFS and returns it as a data URI.
  */
 export async function getGeneratedStoryboardAction(
   sceneNumber: number,
   sessionTimestamp: string
 ) {
   try {
-    const dir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
     const filename = `storyboard-${sceneNumber}.png`;
-    const filePath = path.join(dir, filename);
+    const key = `storyboard/generated/${sessionTimestamp}/${filename}`;
 
-    if (!fs.existsSync(filePath)) {
-      return { success: false, message: `Image not found: ${filePath}` };
+    const imageBuffer = await getFromS3(key);
+    if (!imageBuffer) {
+      return { success: false, message: `Image not found in S3: ${key}` };
     }
 
-    const imageBuffer = fs.readFileSync(filePath);
     const dataUri = `data:image/png;base64,${imageBuffer.toString('base64')}`;
 
     return { success: true, dataUri, filename };
   } catch (error: any) {
-    console.error('Failed to read generated storyboard image:', error);
-    return { success: false, message: error.message || 'Failed to read image from disk.' };
+    console.error('Failed to read generated storyboard image from S3:', error);
+    return { success: false, message: error.message || 'Failed to read image from object storage.' };
   }
 }
 
 /**
- * Reads a sliced grid image from disk and returns it as a data URI.
+ * Reads a sliced grid image from SeaweedFS and returns it as a data URI.
  */
 export async function getSlicedGridAction(
   sceneNumber: number,
@@ -149,27 +142,26 @@ export async function getSlicedGridAction(
   sessionTimestamp: string
 ) {
   try {
-    const dir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
     const filename = `storyboard-${sceneNumber}-grid-${gridNumber}.png`;
-    const filePath = path.join(dir, filename);
+    const key = `storyboard/sliced/${sessionTimestamp}/${filename}`;
 
-    if (!fs.existsSync(filePath)) {
-      return { success: false, message: `Sliced image not found: ${filePath}` };
+    const imageBuffer = await getFromS3(key);
+    if (!imageBuffer) {
+      return { success: false, message: `Sliced image not found in S3: ${key}` };
     }
 
-    const imageBuffer = fs.readFileSync(filePath);
     const dataUri = `data:image/png;base64,${imageBuffer.toString('base64')}`;
 
     return { success: true, dataUri, filename };
   } catch (error: any) {
-    console.error('Failed to read sliced grid image:', error);
-    return { success: false, message: error.message || 'Failed to read sliced image from disk.' };
+    console.error('Failed to read sliced grid image from S3:', error);
+    return { success: false, message: error.message || 'Failed to read sliced image from object storage.' };
   }
 }
 
 /**
- * Processes a revised panel: resizes it to match original, replaces original grid,
- * and re-composites the entire master storyboard.
+ * Processes a revised panel: resizes it to match original, replaces original grid in S3,
+ * and re-composites the entire master storyboard in S3.
  */
 export async function saveRevisedPanelImageAction(
   sceneNumber: number,
@@ -178,17 +170,15 @@ export async function saveRevisedPanelImageAction(
   sessionTimestamp: string
 ) {
   try {
-    const slicedDir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
-    const generatedDir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
-
-    const originalGridPath = path.join(slicedDir, `storyboard-${sceneNumber}-grid-${gridNumber}.png`);
+    const originalGridKey = `storyboard/sliced/${sessionTimestamp}/storyboard-${sceneNumber}-grid-${gridNumber}.png`;
     
-    if (!fs.existsSync(originalGridPath)) {
-      throw new Error(`Original grid not found: ${originalGridPath}`);
+    const originalGridBuffer = await getFromS3(originalGridKey);
+    if (!originalGridBuffer) {
+      throw new Error(`Original grid not found in S3: ${originalGridKey}`);
     }
 
     // 1. Get original dimensions
-    const originalMetadata = await sharp(originalGridPath).metadata();
+    const originalMetadata = await sharp(originalGridBuffer).metadata();
     if (!originalMetadata.width || !originalMetadata.height) {
       throw new Error('Could not read original grid dimensions');
     }
@@ -196,19 +186,22 @@ export async function saveRevisedPanelImageAction(
     // 2. Process revised image: Resize to match original exactly
     const revisedBuffer = Buffer.from(revisedDataUri.split(',')[1], 'base64');
     const processedRevisedBuffer = await sharp(revisedBuffer)
-      .resize(originalMetadata.width, originalMetadata.height, { fit: 'fill' }) // "Do not crop, only resize"
+      .resize(originalMetadata.width, originalMetadata.height, { fit: 'fill' })
       .toBuffer();
 
-    // 3. Replace original grid image
-    fs.writeFileSync(originalGridPath, processedRevisedBuffer);
+    // 3. Replace original grid image in S3
+    await uploadToS3(originalGridKey, processedRevisedBuffer);
 
     // 4. Combine all four grid photos as the new storyboard image
-    const grids = [1, 2, 3, 4].map(g => path.join(slicedDir, `storyboard-${sceneNumber}-grid-${g}.png`));
+    const gridKeys = [1, 2, 3, 4].map(g => `storyboard/sliced/${sessionTimestamp}/storyboard-${sceneNumber}-grid-${g}.png`);
     
-    for (const gPath of grids) {
-      if (!fs.existsSync(gPath)) {
-        throw new Error(`Missing grid component for re-compositing: ${gPath}`);
+    const gridBuffers: Buffer[] = [];
+    for (const key of gridKeys) {
+      const buf = await getFromS3(key);
+      if (!buf) {
+        throw new Error(`Missing grid component in S3 for re-compositing: ${key}`);
       }
+      gridBuffers.push(buf);
     }
 
     // Master image should be 2x original grid width and 2x original grid height
@@ -224,28 +217,28 @@ export async function saveRevisedPanelImageAction(
       }
     })
     .composite([
-      { input: grids[0], left: 0, top: 0 },
-      { input: grids[1], left: originalMetadata.width, top: 0 },
-      { input: grids[2], left: 0, top: originalMetadata.height },
-      { input: grids[3], left: originalMetadata.width, top: originalMetadata.height },
+      { input: gridBuffers[0], left: 0, top: 0 },
+      { input: gridBuffers[1], left: originalMetadata.width, top: 0 },
+      { input: gridBuffers[2], left: 0, top: originalMetadata.height },
+      { input: gridBuffers[3], left: originalMetadata.width, top: originalMetadata.height },
     ])
     .png()
     .toBuffer();
 
-    // 5. Save the new 4-grid image to storyboard/generated/
+    // 5. Save the new 4-grid image to storyboard/generated/ in S3
     const masterFilename = `storyboard-${sceneNumber}.png`;
-    const masterPath = path.join(generatedDir, masterFilename);
-    fs.writeFileSync(masterPath, compositeImage);
+    const masterKey = `storyboard/generated/${sessionTimestamp}/${masterFilename}`;
+    await uploadToS3(masterKey, compositeImage);
 
     const masterDataUri = `data:image/png;base64,${compositeImage.toString('base64')}`;
 
     return { 
       success: true, 
-      message: `Updated Panel ${gridNumber} and re-composited Storyboard ${sceneNumber}.`,
+      message: `Updated Panel ${gridNumber} and re-composited Storyboard ${sceneNumber} in SeaweedFS.`,
       masterDataUri 
     };
   } catch (error: any) {
-    console.error('Failed to process revised panel and recomposite:', error);
-    return { success: false, message: error.message || 'Failed to update composite image.' };
+    console.error('Failed to process revised panel and recomposite in S3:', error);
+    return { success: false, message: error.message || 'Failed to update composite image in object storage.' };
   }
 }

@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "movie-script-user",
+      "credentials": [
+        {
+          "accessKey": "any",
+          "secretKey": "any"
+        }
+      ],
+      "actions": ["Read", "Write", "List", "Tagging", "Admin"]
+    }
+  ]
+}

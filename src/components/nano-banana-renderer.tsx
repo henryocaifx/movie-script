@@ -88,12 +88,12 @@ export function NanoBananaRenderer({ scenes, generatedImages, setGeneratedImages
 
             toast({
                 title: "Archive Successful",
-                description: `All ${imagesToExport.length} storyboards saved to /storyboard/${timestamp}`,
+                description: `All ${imagesToExport.length} storyboards saved to SeaweedFS: /storyboard/${timestamp}`,
             });
         } catch (error: any) {
             toast({
                 title: "Export Error",
-                description: error.message || "Failed to save archive to disk.",
+                description: error.message || "Failed to save archive to object storage.",
                 variant: "destructive"
             });
         } finally {

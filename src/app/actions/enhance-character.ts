@@ -3,6 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
+import { uploadToS3, getFromS3, existsInS3 } from '@/lib/s3';
 
 const COMFY_URL = 'http://localhost:8189';
 
@@ -12,18 +13,15 @@ export async function enhanceCharacterAction(
   sessionTimestamp: string
 ) {
   try {
-    const slicedDir = path.join(process.cwd(), 'storyboard', 'sliced', sessionTimestamp);
     const inputFilename = `storyboard-${sceneNumber}-grid-${gridNumber}.png`;
-    const inputPath = path.join(slicedDir, inputFilename);
-    const outputFilename = `storyboard-${sceneNumber}-grid-${gridNumber}-sc.png`;
-    const outputPath = path.join(slicedDir, outputFilename);
+    const inputKey = `storyboard/sliced/${sessionTimestamp}/${inputFilename}`;
 
-    if (!fs.existsSync(inputPath)) {
-      throw new Error(`Sliced image not found: ${inputPath}`);
+    const imageBuffer = await getFromS3(inputKey);
+    if (!imageBuffer) {
+      throw new Error(`Sliced image not found in S3: ${inputKey}`);
     }
 
-    // 1. Upload image to ComfyUI
-    const imageBuffer = fs.readFileSync(inputPath);
+    // 1. Upload image to ComfyUI (ComfyUI still needs a local API call, but we send it the buffer from S3)
     const formData = new FormData();
     const blob = new Blob([new Uint8Array(imageBuffer)], { type: 'image/png' });
     formData.append('image', blob, inputFilename);
@@ -41,7 +39,7 @@ export async function enhanceCharacterAction(
     const uploadData = await uploadResponse.json();
     const comfyFilename = uploadData.name;
 
-    // 2. Prepare workflow
+    // 2. Prepare workflow (Workflow JSON is still local config/asset)
     const workflowPath = path.join(process.cwd(), 'public', 'z-i2i.json');
     const workflow = JSON.parse(fs.readFileSync(workflowPath, 'utf8'));
 
@@ -72,7 +70,7 @@ export async function enhanceCharacterAction(
     // Max wait 10 minutes (120 * 5s)
     const maxRetries = 120;
     for (let i = 0; i < maxRetries; i++) {
-      process.stdout.write(`.`); // Simple progress indicator in terminal
+      process.stdout.write(`.`); 
       await new Promise(resolve => setTimeout(resolve, 5000));
 
       const historyResponse = await fetch(`${COMFY_URL}/history/${promptId}`);
@@ -83,7 +81,6 @@ export async function enhanceCharacterAction(
         console.log(`\n[ComfyUI] Prompt ${promptId} finished execution.`);
         const historyEntry = historyData[promptId];
         
-        // Check for node errors
         if (historyEntry.status?.messages) {
             const errors = historyEntry.status.messages.filter((m: any) => m[0] === 'error');
             if (errors.length > 0) {
@@ -93,34 +90,24 @@ export async function enhanceCharacterAction(
         }
 
         completed = true;
-        
-        // Log available outputs for debugging
         const availableNodes = Object.keys(historyEntry.outputs);
-        console.log(`[ComfyUI] Available output nodes: ${availableNodes.join(', ')}`);
 
-        // Find the output from node 984 (PreviewImage) or 950 (InpaintStitchImproved)
-        // Node 984 is "Output 2 Post-Face Detail"
         const nodeOutput = historyEntry.outputs["984"];
         if (nodeOutput && nodeOutput.images && nodeOutput.images.length > 0) {
           outputImageData = nodeOutput.images[0];
-          console.log(`[ComfyUI] Found output in node 984`);
           break;
         }
         
-        // Fallback to node 950
         const fallbackOutput = historyEntry.outputs["950"];
         if (fallbackOutput && fallbackOutput.images && fallbackOutput.images.length > 0) {
             outputImageData = fallbackOutput.images[0];
-            console.log(`[ComfyUI] Found output in node 950`);
             break;
         }
 
-        // Final fallback: any node that has images
         for (const nodeId of availableNodes) {
             const out = historyEntry.outputs[nodeId];
             if (out.images && out.images.length > 0) {
                 outputImageData = out.images[0];
-                console.log(`[ComfyUI] Found fallback output in node ${nodeId}`);
                 break;
             }
         }
@@ -155,20 +142,19 @@ export async function enhanceCharacterAction(
       .resize(inputMetadata.width, inputMetadata.height, { fit: 'fill' })
       .toBuffer();
 
-    // 7. Overwrite original grid with enhanced version
-    fs.writeFileSync(inputPath, finalBuffer);
+    // 7. Overwrite original grid in S3 with enhanced version
+    await uploadToS3(inputKey, finalBuffer);
 
     // 8. Re-composite the master storyboard image (4-panel grid)
-    const generatedDir = path.join(process.cwd(), 'storyboard', 'generated', sessionTimestamp);
-    if (!fs.existsSync(generatedDir)) fs.mkdirSync(generatedDir, { recursive: true });
-
-    // Load all four grid photos
-    const grids = [1, 2, 3, 4].map(g => path.join(slicedDir, `storyboard-${sceneNumber}-grid-${g}.png`));
+    const gridKeys = [1, 2, 3, 4].map(g => `storyboard/sliced/${sessionTimestamp}/storyboard-${sceneNumber}-grid-${g}.png`);
     
-    for (const gPath of grids) {
-      if (!fs.existsSync(gPath)) {
-        throw new Error(`Missing grid component for re-compositing: ${gPath}`);
+    const gridBuffers: Buffer[] = [];
+    for (const key of gridKeys) {
+      const buf = await getFromS3(key);
+      if (!buf) {
+        throw new Error(`Missing grid component in S3 for re-compositing: ${key}`);
       }
+      gridBuffers.push(buf);
     }
 
     // Master image should be 2x original grid size
@@ -184,26 +170,26 @@ export async function enhanceCharacterAction(
       }
     })
     .composite([
-      { input: grids[0], left: 0, top: 0 },
-      { input: grids[1], left: inputMetadata.width, top: 0 },
-      { input: grids[2], left: 0, top: inputMetadata.height },
-      { input: grids[3], left: inputMetadata.width, top: inputMetadata.height },
+      { input: gridBuffers[0], left: 0, top: 0 },
+      { input: gridBuffers[1], left: inputMetadata.width, top: 0 },
+      { input: gridBuffers[2], left: 0, top: inputMetadata.height },
+      { input: gridBuffers[3], left: inputMetadata.width, top: inputMetadata.height },
     ])
     .png()
     .toBuffer();
 
-    // 9. Save the new master 4-grid image
+    // 9. Save the new master 4-grid image to S3
     const masterFilename = `storyboard-${sceneNumber}.png`;
-    const masterPath = path.join(generatedDir, masterFilename);
-    fs.writeFileSync(masterPath, compositeImage);
+    const masterKey = `storyboard/generated/${sessionTimestamp}/${masterFilename}`;
+    await uploadToS3(masterKey, compositeImage);
 
     const masterDataUri = `data:image/png;base64,${compositeImage.toString('base64')}`;
 
     return {
       success: true,
-      message: `Enhanced Character and updated Master Storyboard ${sceneNumber}.`,
+      message: `Enhanced Character and updated Master Storyboard ${sceneNumber} in SeaweedFS.`,
       filename: masterFilename,
-      path: masterPath,
+      masterKey: masterKey,
       masterDataUri
     };
   } catch (error: any) {
