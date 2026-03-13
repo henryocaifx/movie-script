@@ -57,7 +57,7 @@ export default function AIFXCast() {
 
       // Automatically save the markdown files to the scenes folder
       const exportData = parsedScenes.map((scene, i) => ({
-        filename: `scene-${i + 1}.md`,
+        filename: `scene-${i + 1}`,
         content: serializeSceneToMarkdown(scene),
       }));
 

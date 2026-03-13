@@ -62,7 +62,7 @@ export function VisualStoryboardGenerator({
     try {
       const content = serializeSceneToMarkdown(scene);
       const result = await saveScenesAction(
-        [{ filename: `scene-${idx + 1}.md`, content }],
+        [{ filename: `scene-${idx + 1}`, content }],
         sessionTimestamp
       );
 
@@ -183,7 +183,7 @@ export function VisualStoryboardGenerator({
       const markdownContent = serializeSceneToMarkdown(currentScene);
 
       const saveResult = await saveScenesAction(
-        [{ filename: `scene-${sceneNumber}.md`, content: markdownContent }],
+        [{ filename: `scene-${sceneNumber}`, content: markdownContent }],
         sessionTimestamp
       );
 
