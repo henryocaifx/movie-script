@@ -1,5 +1,5 @@
 # version: '3.9'
-
+# This is a copy of the original seaweedfs docker-compose.yml. The original is not located in this project. It's located at ../seaweedfs/docker-compose.yml
 services:
   master:
     image: chrislusf/seaweedfs:${SEAWEEDFS_VERSION} # use a remote image
