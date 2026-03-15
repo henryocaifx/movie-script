@@ -47,3 +47,6 @@ firestore-debug.log
 # generated content
 /scenes
 /storyboard
+
+# config files with credentials
+/seaweedfs/s3_config.json
